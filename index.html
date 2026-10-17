@@ -1,0 +1,3008 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LiquidGlass Agency OS — Control de Igualas, Entregables y Cobros Quincenales</title>
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono para cifras financieras -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Iconos Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <style>
+    :root {
+      /* Tipografía */
+      --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Paleta Modo Claro (Default: Frosted Ice-White & Royal Sky Mesh) */
+      --bg-base: #e6f2ff;
+      --bg-mesh-1: #dbeafe;
+      --bg-mesh-2: #bae6fd;
+      --bg-mesh-3: #93c5fd;
+      --bg-mesh-accent: rgba(59, 130, 246, 0.28);
+
+      --glass-surface: rgba(255, 255, 255, 0.62);
+      --glass-surface-strong: rgba(255, 255, 255, 0.82);
+      --glass-surface-subtle: rgba(255, 255, 255, 0.44);
+      --glass-input: rgba(255, 255, 255, 0.72);
+      --glass-border: rgba(255, 255, 255, 0.75);
+      --glass-border-subtle: rgba(59, 130, 246, 0.18);
+      --glass-highlight: inset 0 1px 1px rgba(255, 255, 255, 0.95);
+      --glass-shadow: 0 16px 40px -10px rgba(29, 78, 216, 0.12), 0 4px 16px -2px rgba(15, 23, 42, 0.05);
+      --glass-shadow-hover: 0 22px 48px -10px rgba(29, 78, 216, 0.2), 0 6px 20px -3px rgba(15, 23, 42, 0.08);
+
+      --text-primary: #0c192c;
+      --text-secondary: #334e68;
+      --text-muted: #627d98;
+
+      --accent-primary: #2563eb;
+      --accent-secondary: #0ea5e9;
+      --accent-gradient: linear-gradient(135deg, #2563eb 0%, #0284c7 100%);
+      --accent-glow: 0 8px 22px -4px rgba(37, 99, 235, 0.45);
+
+      /* Estados Semánticos */
+      --status-paid-bg: rgba(16, 185, 129, 0.16);
+      --status-paid-text: #047857;
+      --status-paid-border: rgba(16, 185, 129, 0.4);
+
+      --status-ontime-bg: rgba(14, 165, 233, 0.16);
+      --status-ontime-text: #0369a1;
+      --status-ontime-border: rgba(14, 165, 233, 0.4);
+
+      --status-partial-bg: rgba(245, 158, 11, 0.18);
+      --status-partial-text: #b45309;
+      --status-partial-border: rgba(245, 158, 11, 0.45);
+
+      --status-overdue-bg: rgba(239, 68, 68, 0.16);
+      --status-overdue-text: #b91c1c;
+      --status-overdue-border: rgba(239, 68, 68, 0.42);
+
+      --blur-strength: 22px;
+      --radius-xl: 24px;
+      --radius-lg: 18px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --sidebar-width: 272px;
+      --sidebar-collapsed-width: 86px;
+      --transition-smooth: all 0.36s cubic-bezier(0.16, 1, 0.3, 1);
+      --transition-spring: all 0.48s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Paleta Modo Oscuro (Deep Obsidian & Glowing Cobalt/Cyan Glass) */
+    [data-theme="dark"] {
+      --bg-base: #070b14;
+      --bg-mesh-1: #0b0f19;
+      --bg-mesh-2: #0f172a;
+      --bg-mesh-3: #172554;
+      --bg-mesh-accent: rgba(37, 99, 235, 0.22);
+
+      --glass-surface: rgba(17, 29, 58, 0.56);
+      --glass-surface-strong: rgba(15, 23, 42, 0.85);
+      --glass-surface-subtle: rgba(30, 58, 138, 0.24);
+      --glass-input: rgba(15, 23, 42, 0.68);
+      --glass-border: rgba(147, 197, 253, 0.22);
+      --glass-border-subtle: rgba(56, 189, 248, 0.16);
+      --glass-highlight: inset 0 1px 1px rgba(255, 255, 255, 0.14);
+      --glass-shadow: 0 20px 50px -12px rgba(2, 6, 23, 0.75), 0 0 25px -5px rgba(37, 99, 235, 0.15);
+      --glass-shadow-hover: 0 24px 56px -10px rgba(2, 6, 23, 0.9), 0 0 32px -2px rgba(56, 189, 248, 0.25);
+
+      --text-primary: #f0f9ff;
+      --text-secondary: #bae6fd;
+      --text-muted: #7dd3fc;
+
+      --accent-primary: #38bdf8;
+      --accent-secondary: #3b82f6;
+      --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+      --accent-glow: 0 8px 25px -4px rgba(56, 189, 248, 0.45);
+
+      --status-paid-bg: rgba(16, 185, 129, 0.22);
+      --status-paid-text: #6ee7b7;
+      --status-paid-border: rgba(52, 211, 153, 0.45);
+
+      --status-ontime-bg: rgba(56, 189, 248, 0.2);
+      --status-ontime-text: #7dd3fc;
+      --status-ontime-border: rgba(56, 189, 248, 0.45);
+
+      --status-partial-bg: rgba(245, 158, 11, 0.22);
+      --status-partial-text: #fcd34d;
+      --status-partial-border: rgba(251, 191, 36, 0.45);
+
+      --status-overdue-bg: rgba(239, 68, 68, 0.24);
+      --status-overdue-text: #fca5a5;
+      --status-overdue-border: rgba(248, 113, 113, 0.5);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      min-height: 100vh;
+      font-family: var(--font-sans);
+      color: var(--text-primary);
+      background-color: var(--bg-base);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      transition: background-color 0.35s ease, color 0.35s ease;
+    }
+
+    /* Fondo Mesh Animado Liquid Glass */
+    .ambient-mesh {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(circle at 12% 18%, var(--bg-mesh-accent) 0%, transparent 42%),
+        radial-gradient(circle at 86% 14%, rgba(14, 165, 233, 0.26) 0%, transparent 45%),
+        radial-gradient(circle at 75% 84%, rgba(29, 78, 216, 0.22) 0%, transparent 48%),
+        radial-gradient(circle at 22% 80%, rgba(56, 189, 248, 0.20) 0%, transparent 40%),
+        linear-gradient(135deg, var(--bg-mesh-1) 0%, var(--bg-mesh-2) 52%, var(--bg-mesh-3) 100%);
+      overflow: hidden;
+    }
+
+    .ambient-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(70px);
+      opacity: 0.55;
+      animation: floatOrb 18s ease-in-out infinite alternate;
+      pointer-events: none;
+    }
+
+    .ambient-orb.orb-1 {
+      width: 420px;
+      height: 420px;
+      background: #38bdf8;
+      top: -110px;
+      left: 18%;
+    }
+
+    .ambient-orb.orb-2 {
+      width: 380px;
+      height: 380px;
+      background: #2563eb;
+      bottom: -90px;
+      right: 12%;
+      animation-delay: -7s;
+    }
+
+    @keyframes floatOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(45px, 35px) scale(1.12); }
+    }
+
+    /* Utilidad Liquid Glass Base */
+    .liquid-glass {
+      background: var(--glass-surface);
+      backdrop-filter: blur(var(--blur-strength)) saturate(170%);
+      -webkit-backdrop-filter: blur(var(--blur-strength)) saturate(170%);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow), var(--glass-highlight);
+      border-radius: var(--radius-xl);
+      transition: var(--transition-smooth);
+    }
+
+    .liquid-glass-subtle {
+      background: var(--glass-surface-subtle);
+      backdrop-filter: blur(14px) saturate(150%);
+      -webkit-backdrop-filter: blur(14px) saturate(150%);
+      border: 1px solid var(--glass-border-subtle);
+      border-radius: var(--radius-lg);
+    }
+
+    /* Estructura Principal App */
+    .app-shell {
+      display: flex;
+      min-height: 100vh;
+      padding: 18px;
+      gap: 20px;
+      max-width: 1680px;
+      margin: 0 auto;
+    }
+
+    .glass-sidebar {
+      width: var(--sidebar-width);
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 22px 16px;
+      position: sticky;
+      top: 18px;
+      height: calc(100vh - 36px);
+      z-index: 30;
+    }
+
+    .app-shell.sidebar-collapsed .glass-sidebar {
+      width: var(--sidebar-collapsed-width);
+    }
+
+    .app-shell.sidebar-collapsed .brand-text,
+    .app-shell.sidebar-collapsed .nav-label,
+    .app-shell.sidebar-collapsed .sidebar-footer-info {
+      display: none;
+    }
+
+    .app-shell.sidebar-collapsed .nav-btn {
+      justify-content: center;
+      padding: 14px;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 4px 6px 20px;
+      border-bottom: 1px solid var(--glass-border-subtle);
+    }
+
+    .logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: var(--accent-gradient);
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 1.4rem;
+      box-shadow: var(--accent-glow);
+      flex-shrink: 0;
+    }
+
+    .brand-text h1 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    .brand-text span {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .collapse-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-surface-subtle);
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: var(--transition-smooth);
+    }
+
+    .collapse-btn:hover {
+      color: var(--accent-primary);
+      transform: scale(1.05);
+    }
+
+    .nav-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 22px;
+      flex: 1;
+    }
+
+    .nav-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      padding: 13px 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 0.93rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      text-align: left;
+    }
+
+    .nav-btn i {
+      font-size: 1.32rem;
+      flex-shrink: 0;
+    }
+
+    .nav-btn:hover {
+      background: var(--glass-surface-subtle);
+      color: var(--text-primary);
+      border-color: var(--glass-border-subtle);
+      transform: translateX(3px);
+    }
+
+    .nav-btn.active {
+      background: var(--accent-gradient);
+      color: #ffffff;
+      box-shadow: var(--accent-glow);
+      border-color: rgba(255, 255, 255, 0.35);
+    }
+
+    .sidebar-footer {
+      padding-top: 16px;
+      border-top: 1px solid var(--glass-border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .connection-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 10px #10b981;
+      flex-shrink: 0;
+    }
+
+    .status-dot.demo {
+      background: #0ea5e9;
+      box-shadow: 0 0 10px #0ea5e9;
+    }
+
+    .main-workspace {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      padding-bottom: 90px;
+    }
+
+    .top-header {
+      padding: 16px 22px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .header-title-block h2 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .header-title-block p {
+      font-size: 0.84rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .header-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* Motor de Tasa de Cambio en la Barra Superior */
+    .exchange-engine {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 14px;
+      border-radius: var(--radius-lg);
+      background: var(--glass-surface-strong);
+      border: 1px solid var(--glass-border);
+      box-shadow: inset 0 1px 2px rgba(255,255,255,0.4);
+    }
+
+    .rate-badge-label {
+      display: flex;
+      flex-direction: column;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+    }
+
+    .rate-badge-label span {
+      color: var(--accent-primary);
+      font-size: 0.68rem;
+    }
+
+    .rate-value-display {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: var(--glass-surface-subtle);
+      border: 1px solid var(--glass-border-subtle);
+      min-width: 96px;
+      text-align: center;
+    }
+
+    .rate-manual-input {
+      width: 105px;
+      font-family: var(--font-mono);
+      font-size: 1.02rem;
+      font-weight: 700;
+      padding: 5px 8px;
+      border-radius: 8px;
+      border: 1px solid var(--accent-primary);
+      background: var(--glass-input);
+      color: var(--text-primary);
+      outline: none;
+    }
+
+    .icon-action-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 11px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-surface-subtle);
+      color: var(--text-primary);
+      cursor: pointer;
+      display: inline-grid;
+      place-items: center;
+      font-size: 1.12rem;
+      transition: var(--transition-smooth);
+    }
+
+    .icon-action-btn:hover {
+      background: var(--accent-gradient);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: var(--accent-glow);
+      transform: translateY(-1px);
+    }
+
+    .month-picker-input {
+      padding: 8px 12px;
+      border-radius: 11px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-input);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-weight: 600;
+      font-size: 0.86rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .view-section {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+      animation: fadeView 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .view-section.active {
+      display: flex;
+    }
+
+    @keyframes fadeView {
+      from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.99);
+        filter: blur(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+    }
+
+    /* Barra de Acciones Rápidas (Antes de KPIs y Cabeceras de Sección) */
+    .quick-actions-banner {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 24px;
+      background: linear-gradient(135deg, var(--glass-surface-strong) 0%, var(--glass-surface) 100%);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--glass-shadow), var(--glass-highlight);
+      transition: var(--transition-smooth);
+    }
+
+    .quick-actions-info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .quick-actions-badge {
+      width: 46px;
+      height: 46px;
+      border-radius: 14px;
+      background: var(--glass-surface-subtle);
+      border: 1px solid var(--glass-border);
+      display: grid;
+      place-items: center;
+      font-size: 1.45rem;
+      color: var(--accent-primary);
+      flex-shrink: 0;
+    }
+
+    .quick-actions-text h3 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    .quick-actions-text p {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .quick-actions-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-action-hero {
+      padding: 13px 22px;
+      border-radius: 15px;
+      font-family: var(--font-sans);
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: var(--transition-spring);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+    }
+
+    .btn-action-hero i {
+      font-size: 1.22rem;
+    }
+
+    .btn-action-hero.primary {
+      background: var(--accent-gradient);
+      color: #ffffff;
+      box-shadow: var(--accent-glow);
+    }
+
+    .btn-action-hero.secondary {
+      background: var(--glass-surface-strong);
+      color: var(--text-primary);
+      border-color: var(--glass-border);
+      box-shadow: var(--glass-shadow);
+    }
+
+    .btn-action-hero:hover {
+      transform: translateY(-3px) scale(1.02);
+      filter: brightness(1.06);
+    }
+
+    .btn-action-hero:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(235px, 1fr));
+      gap: 18px;
+    }
+
+    .kpi-card {
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      transition: var(--transition-spring);
+    }
+
+    .kpi-card:hover {
+      transform: translateY(-5px) scale(1.01);
+      box-shadow: var(--glass-shadow-hover);
+    }
+
+    .kpi-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .kpi-label {
+      font-size: 0.83rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .kpi-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: var(--glass-surface-subtle);
+      border: 1px solid var(--glass-border);
+      display: grid;
+      place-items: center;
+      font-size: 1.35rem;
+      color: var(--accent-primary);
+    }
+
+    .kpi-value {
+      font-family: var(--font-mono);
+      font-size: 1.85rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text-primary);
+    }
+
+    .kpi-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Badges de Estado Quincenal */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .status-badge.paid {
+      background: var(--status-paid-bg);
+      color: var(--status-paid-text);
+      border-color: var(--status-paid-border);
+    }
+
+    .status-badge.ontime {
+      background: var(--status-ontime-bg);
+      color: var(--status-ontime-text);
+      border-color: var(--status-ontime-border);
+    }
+
+    .status-badge.partial {
+      background: var(--status-partial-bg);
+      color: var(--status-partial-text);
+      border-color: var(--status-partial-border);
+    }
+
+    .status-badge.overdue {
+      background: var(--status-overdue-bg);
+      color: var(--status-overdue-text);
+      border-color: var(--status-overdue-border);
+    }
+
+    .dashboard-split {
+      display: grid;
+      grid-template-columns: 1.55fr 1fr;
+      gap: 20px;
+    }
+
+    .section-card {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .section-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .section-header h3 {
+      font-size: 1.12rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .section-header h3 i {
+      color: var(--accent-primary);
+      font-size: 1.28rem;
+    }
+
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .glass-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 8px;
+      text-align: left;
+    }
+
+    .glass-table th {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      padding: 8px 14px;
+      font-weight: 700;
+    }
+
+    .glass-table tbody tr {
+      background: var(--glass-surface-subtle);
+      transition: var(--transition-smooth);
+    }
+
+    .glass-table tbody tr:hover {
+      background: var(--glass-surface-strong);
+      transform: scale(1.004);
+    }
+
+    .glass-table td {
+      padding: 13px 14px;
+      font-size: 0.88rem;
+      border-top: 1px solid var(--glass-border-subtle);
+      border-bottom: 1px solid var(--glass-border-subtle);
+    }
+
+    .glass-table td:first-child {
+      border-left: 1px solid var(--glass-border-subtle);
+      border-top-left-radius: 12px;
+      border-bottom-left-radius: 12px;
+      font-weight: 700;
+    }
+
+    .glass-table td:last-child {
+      border-right: 1px solid var(--glass-border-subtle);
+      border-top-right-radius: 12px;
+      border-bottom-right-radius: 12px;
+    }
+
+    .mono-num {
+      font-family: var(--font-mono);
+      font-weight: 600;
+    }
+
+    /* Calendario Quincenal Visual */
+    .quincena-timeline {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .quincena-window-box {
+      padding: 16px;
+      border-radius: var(--radius-lg);
+      background: var(--glass-surface-subtle);
+      border: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .quincena-window-box.active-window {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+
+    .day-strip {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .day-pill {
+      padding: 7px 4px;
+      text-align: center;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-weight: 700;
+      background: var(--glass-surface);
+      border: 1px solid var(--glass-border-subtle);
+    }
+
+    .day-pill.today {
+      background: var(--accent-gradient);
+      color: #fff;
+      box-shadow: var(--accent-glow);
+    }
+
+    /* Grid de Tarjetas de Marcas y Entregables */
+    .brands-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(345px, 1fr));
+      gap: 20px;
+    }
+
+    .brand-card {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .brand-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand-title-group h4 {
+      font-size: 1.14rem;
+      font-weight: 800;
+    }
+
+    .brand-category-tag {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .retainer-pill {
+      padding: 6px 12px;
+      border-radius: 12px;
+      background: var(--accent-gradient);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 0.92rem;
+      box-shadow: var(--accent-glow);
+    }
+
+    .brand-quincenas-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .quincena-mini-card {
+      padding: 10px 12px;
+      border-radius: 12px;
+      background: var(--glass-surface-subtle);
+      border: 1px solid var(--glass-border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .quincena-mini-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    /* Contadores Interactivos de Entregables */
+    .deliverables-list {
+      display: flex;
+      flex-direction: column;
+      gap: 11px;
+    }
+
+    .deliverable-item {
+      padding: 11px 13px;
+      border-radius: 13px;
+      background: var(--glass-surface-subtle);
+      border: 1px solid var(--glass-border-subtle);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .deliverable-row-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .deliverable-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.86rem;
+      font-weight: 700;
+    }
+
+    .deliverable-name i {
+      color: var(--accent-primary);
+      font-size: 1.1rem;
+    }
+
+    .counter-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .counter-readout {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 700;
+      min-width: 66px;
+      text-align: center;
+    }
+
+    .step-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-surface-strong);
+      color: var(--text-primary);
+      font-weight: 800;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: var(--transition-smooth);
+    }
+
+    .step-btn:hover {
+      background: var(--accent-primary);
+      color: #fff;
+      border-color: transparent;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 7px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.25);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: var(--accent-gradient);
+      transition: width 0.3s ease;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .glass-input, .glass-select {
+      padding: 11px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-input);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      font-weight: 500;
+      outline: none;
+      transition: var(--transition-smooth);
+    }
+
+    .glass-input:focus, .glass-select:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
+    }
+
+    .btn-primary {
+      padding: 12px 20px;
+      border-radius: 13px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      background: var(--accent-gradient);
+      color: #fff;
+      font-family: var(--font-sans);
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: var(--accent-glow);
+      transition: var(--transition-smooth);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.06);
+    }
+
+    .btn-secondary {
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--glass-border);
+      background: var(--glass-surface-subtle);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      transition: var(--transition-smooth);
+    }
+
+    .btn-secondary:hover {
+      background: var(--glass-surface-strong);
+    }
+
+    /* Panel de Conversión en Tiempo Real (Bs -> USD) */
+    .conversion-preview-box {
+      padding: 18px;
+      border-radius: var(--radius-lg);
+      background: var(--glass-surface-subtle);
+      border: 1px solid var(--glass-border);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      align-items: center;
+    }
+
+    /* Zona Drag & Drop para Capture de Pago */
+    .capture-dropzone {
+      border: 2px dashed var(--accent-primary);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      text-align: center;
+      background: var(--glass-surface-subtle);
+      cursor: pointer;
+    /* Lightbox Modal & Modales de Formularios Dinámicos */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(7, 11, 20, 0.62);
+      backdrop-filter: blur(16px) saturate(160%);
+      -webkit-backdrop-filter: blur(16px) saturate(160%);
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.34s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.34s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .modal-glass-box {
+      max-width: 560px;
+      width: 100%;
+      padding: 26px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      transform: translateY(24px) scale(0.95);
+      transition: transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
+      max-height: 92vh;
+      overflow-y: auto;
+    }
+
+    .modal-glass-box.modal-lg {
+      max-width: 740px;
+    }
+
+    .modal-backdrop.open .modal-glass-box {
+      transform: translateY(0) scale(1);
+    }
+
+    .lightbox-img {
+      width: 100%;
+      max-height: 70vh;
+      object-fit: contain;
+      border-radius: 14px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .toast-container {
+      position: fixed;
+      bottom: 26px;
+      right: 26px;
+      z-index: 120;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toast-item {
+      padding: 13px 18px;
+      border-radius: 14px;
+      background: var(--glass-surface-strong);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      color: var(--text-primary);
+      font-size: 0.86rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: fadeView 0.25s ease;
+    }
+
+    /* Barra de Navegación Inferior Móvil */
+    .mobile-bottom-nav {
+      display: none;
+      position: fixed;
+      bottom: 12px;
+      left: 12px;
+      right: 12px;
+      z-index: 60;
+      padding: 8px 10px;
+      justify-content: space-around;
+      border-radius: 22px;
+    }
+
+    .mobile-nav-btn {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      padding: 8px 4px;
+      border-radius: 14px;
+      font-family: inherit;
+      font-size: 0.7rem;
+      font-weight: 700;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+    }
+
+    .mobile-nav-btn i {
+      font-size: 1.28rem;
+    }
+
+    .mobile-nav-btn.active {
+      background: var(--accent-gradient);
+      color: #fff;
+      box-shadow: var(--accent-glow);
+    }
+
+    @media (max-width: 1080px) {
+      .dashboard-split {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 820px) {
+      .glass-sidebar {
+        display: none;
+      }
+      .mobile-bottom-nav {
+        display: flex;
+      }
+      .app-shell {
+        padding: 12px;
+      }
+      .top-header {
+        padding: 14px 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-mesh">
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+  </div>
+
+  <div class="app-shell" id="appShell">
+    <!-- BARRA LATERAL LIQUID GLASS (ESCRITORIO) -->
+    <aside class="glass-sidebar liquid-glass">
+      <div>
+        <div class="sidebar-header">
+          <div class="logo-wrap">
+            <div class="logo-badge"><i class="ph-fill ph-sparkle"></i></div>
+            <div class="brand-text">
+              <h1>LiquidGlass</h1>
+              <span>Agency Retainer OS</span>
+            </div>
+          </div>
+          <button class="collapse-btn" id="btnCollapseSidebar" title="Contraer/Expandir menú">
+            <i class="ph ph-sidebar-simple"></i>
+          </button>
+        </div>
+
+        <ul class="nav-list">
+          <li>
+            <button class="nav-btn active" data-target="view-dashboard">
+              <i class="ph-duotone ph-squares-four"></i>
+              <span class="nav-label">Panel Principal</span>
+            </button>
+          </li>
+          <li>
+            <button class="nav-btn" data-target="view-brands">
+              <i class="ph-duotone ph-briefcase"></i>
+              <span class="nav-label">Marcas y Entregables</span>
+            </button>
+          </li>
+          <li>
+            <button class="nav-btn" data-target="view-payments">
+              <i class="ph-duotone ph-Receipt"></i>
+              <span class="nav-label">Cargar Pago / Captures</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="connection-pill liquid-glass-subtle">
+          <span class="status-dot demo" id="connectionDot"></span>
+          <div class="sidebar-footer-info">
+            <div id="connectionLabel">Modo Demo Interactivo</div>
+            <small style="color:var(--text-muted);font-size:0.7rem;" id="connectionSub">Sincronizado localmente</small>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ÁREA DE TRABAJO PRINCIPAL -->
+    <main class="main-workspace">
+      <header class="top-header liquid-glass">
+        <div class="header-title-block">
+          <h2 id="currentViewTitle">Panel Ejecutivo de Cobranza</h2>
+          <p id="currentDateSubtitle">Control quincenal de igualas, entregables y conversión Bs / USD</p>
+        </div>
+
+        <div class="header-controls">
+          <!-- Selector de Mes -->
+          <input type="month" id="monthFilterInput" class="month-picker-input" title="Mes de gestión" />
+
+          <!-- Motor de Tasa de Cambio Bs / USD -->
+          <div class="exchange-engine">
+            <div class="rate-badge-label">
+              Tasa BCV / USD
+              <span id="rateStatusText">Auto API</span>
+            </div>
+
+            <div id="rateDisplayValue" class="rate-value-display">Bs. 45.80</div>
+            <input type="number" step="0.01" min="1" id="rateManualInput" class="rate-manual-input" style="display:none;" placeholder="Ej. 46.20" />
+
+            <button class="icon-action-btn" id="btnToggleManualRate" title="Editar tasa manualmente">
+              <i class="ph ph-pencil-simple"></i>
+            </button>
+            <button class="icon-action-btn" id="btnRefreshApiRate" title="Sincronizar tasa oficial vía API">
+              <i class="ph ph-arrows-clockwise"></i>
+            </button>
+          </div>
+
+          <!-- Interruptor Tema Claro / Oscuro -->
+          <button class="icon-action-btn" id="btnThemeToggle" title="Cambiar Modo Claro / Oscuro">
+            <i class="ph ph-moon-stars" id="themeIcon"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- ================================================================== -->
+      <!-- MÓDULO 1: PANEL PRINCIPAL (EXECUTIVE DASHBOARD)                    -->
+      <!-- ================================================================== -->
+      <section id="view-dashboard" class="view-section active">
+        <!-- Barra de Acciones Rápidas (Antes de las tarjetas de ingresos) -->
+        <div class="quick-actions-banner">
+          <div class="quick-actions-info">
+            <div class="quick-actions-badge">
+              <i class="ph-duotone ph-lightning"></i>
+            </div>
+            <div class="quick-actions-text">
+              <h3>Acciones Rápidas de Gestión</h3>
+              <p>Registra una nueva marca cliente o carga un comprobante de pago quincenal al instante</p>
+            </div>
+          </div>
+          <div class="quick-actions-buttons">
+            <button type="button" class="btn-action-hero secondary" id="btnDashboardAddBrand">
+              <i class="ph-bold ph-folder-plus"></i> Agregar Marca
+            </button>
+            <button type="button" class="btn-action-hero primary" id="btnDashboardAddPayment">
+              <i class="ph-bold ph-currency-circle-dollar"></i> Cargar Pago
+            </button>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <article class="kpi-card liquid-glass">
+            <div class="kpi-top">
+              <span class="kpi-label">Ingreso Mensual Esperado</span>
+              <div class="kpi-icon"><i class="ph-duotone ph-chart-line-up"></i></div>
+            </div>
+            <div class="kpi-value" id="kpiExpectedUsd">$0.00</div>
+            <div class="kpi-sub">
+              <span id="kpiExpectedVes">Eq. Bs. 0,00</span>
+            </div>
+          </article>
+
+          <article class="kpi-card liquid-glass">
+            <div class="kpi-top">
+              <span class="kpi-label">Recaudado Este Mes</span>
+              <div class="kpi-icon" style="color:#10b981;"><i class="ph-duotone ph-hand-coins"></i></div>
+            </div>
+            <div class="kpi-value" id="kpiCollectedUsd">$0.00</div>
+            <div class="kpi-sub">
+              <span id="kpiCollectedVes">Bs. 0,00 recibidos</span>
+            </div>
+          </article>
+
+          <article class="kpi-card liquid-glass">
+            <div class="kpi-top">
+              <span class="kpi-label">Saldo Pendiente por Cobrar</span>
+              <div class="kpi-icon" style="color:#f59e0b;"><i class="ph-duotone ph-hourglass-high"></i></div>
+            </div>
+            <div class="kpi-value" id="kpiPendingUsd">$0.00</div>
+            <div class="kpi-sub">
+              <span id="kpiPendingVes">Eq. Bs. 0,00 por recaudar</span>
+            </div>
+          </article>
+
+          <article class="kpi-card liquid-glass">
+            <div class="kpi-top">
+              <span class="kpi-label">Marcas Activas</span>
+              <div class="kpi-icon" style="color:#0ea5e9;"><i class="ph-duotone ph-buildings"></i></div>
+            </div>
+            <div class="kpi-value" id="kpiActiveBrands">0</div>
+            <div class="kpi-sub">
+              <span id="kpiDeliverablesSummary">0 entregables completados</span>
+            </div>
+          </article>
+        </div>
+
+        <div class="dashboard-split">
+          <!-- Tabla de Alertas de Pago Quincenal (Q1: 1-5 / Q2: 16-20) -->
+          <div class="section-card liquid-glass">
+            <div class="section-header">
+              <h3><i class="ph-duotone ph-bell-ringing"></i> Control Quincenal de Igualas (50% Q1 / 50% Q2)</h3>
+              <button class="btn-secondary" id="btnQuickGoPayment">
+                <i class="ph ph-plus-circle"></i> Registrar Cobro
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table class="glass-table">
+                <thead>
+                  <tr>
+                    <th>Marca</th>
+                    <th>Iguala Mensual</th>
+                    <th>Quincena 1 (Días 1-5)</th>
+                    <th>Quincena 2 (Días 16-20)</th>
+                    <th>Saldo Mes</th>
+                  </tr>
+                </thead>
+                <tbody id="biweeklyStatusTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Calendario de Ventanas de Cobro y Pagos Recientes -->
+          <div class="section-card liquid-glass">
+            <div class="section-header">
+              <h3><i class="ph-duotone ph-calendar-check"></i> Calendario de Cobro Quincenal</h3>
+              <span class="status-badge ontime" id="currentDayIndicator">Día actual</span>
+            </div>
+
+            <div class="quincena-timeline">
+              <div class="quincena-window-box" id="q1WindowCard">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <strong>1ra Quincena (Q1)</strong>
+                  <span style="font-size:0.74rem;color:var(--text-muted);">50% Iguala</span>
+                </div>
+                <p style="font-size:0.78rem;color:var(--text-secondary);">Ventana de pago del día 1 al 5 del mes</p>
+                <div class="day-strip" id="q1DaysStrip"></div>
+              </div>
+
+              <div class="quincena-window-box" id="q2WindowCard">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <strong>2da Quincena (Q2)</strong>
+                  <span style="font-size:0.74rem;color:var(--text-muted);">50% Iguala</span>
+                </div>
+                <p style="font-size:0.78rem;color:var(--text-secondary);">Ventana de pago del día 16 al 20 del mes</p>
+                <div class="day-strip" id="q2DaysStrip"></div>
+              </div>
+            </div>
+
+            <div class="section-header" style="margin-top:6px;">
+              <h3><i class="ph-duotone ph-clock-counter-clockwise"></i> Últimos Pagos Recibidos</h3>
+            </div>
+            <div class="table-responsive">
+              <table class="glass-table">
+                <thead>
+                  <tr>
+                    <th>Marca</th>
+                    <th>Periodo</th>
+                    <th>Monto Bs / USD</th>
+                    <th>Capture</th>
+                  </tr>
+                </thead>
+                <tbody id="recentPaymentsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================================================================== -->
+      <!-- MÓDULO 2: GESTIÓN DE MARCAS Y ENTREGABLES                          -->
+      <!-- ================================================================== -->
+      <section id="view-brands" class="view-section">
+        <div class="quick-actions-banner">
+          <div class="quick-actions-info">
+            <div class="quick-actions-badge">
+              <i class="ph-duotone ph-briefcase"></i>
+            </div>
+            <div class="quick-actions-text">
+              <h3>Portafolio de Marcas y Entregables</h3>
+              <p>Controla el avance mensual de Flyers, Videos e Historias y el estado de cobro de cada cliente</p>
+            </div>
+          </div>
+          <div class="quick-actions-buttons">
+            <button type="button" class="btn-action-hero primary" id="btnOpenBrandModalSection">
+              <i class="ph-bold ph-plus-circle"></i> Agregar Marca
+            </button>
+          </div>
+        </div>
+
+        <div class="brands-grid" id="brandsCardsGrid"></div>
+      </section>
+
+      <!-- ================================================================== -->
+      <!-- MÓDULO 3: CARGAR PAGO Y HISTORIAL CON LIGHTBOX DE CAPTURES         -->
+      <!-- ================================================================== -->
+      <section id="view-payments" class="view-section">
+        <div class="quick-actions-banner">
+          <div class="quick-actions-info">
+            <div class="quick-actions-badge">
+              <i class="ph-duotone ph-receipt"></i>
+            </div>
+            <div class="quick-actions-text">
+              <h3>Control de Pagos y Captures Bancarios</h3>
+              <p>Registra cobros de Quincena 1, Quincena 2 o abonos en Bolívares con conversión automática a USD</p>
+            </div>
+          </div>
+          <div class="quick-actions-buttons">
+            <button type="button" class="btn-action-hero primary" id="btnOpenPaymentModalSection">
+              <i class="ph-bold ph-plus-circle"></i> Cargar Pago
+            </button>
+          </div>
+        </div>
+
+        <!-- Historial Filtrable de Pagos -->
+        <div class="section-card liquid-glass">
+          <div class="section-header">
+            <h3><i class="ph-duotone ph-list-magnifying-glass"></i> Historial de Pagos Registrados</h3>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <select id="historyFilterBrand" class="glass-select" style="padding:8px 12px;font-size:0.84rem;">
+                <option value="ALL">Todas las marcas</option>
+              </select>
+              <select id="historyFilterPeriod" class="glass-select" style="padding:8px 12px;font-size:0.84rem;">
+                <option value="ALL">Todos los periodos</option>
+                <option value="Q1">Quincena 1 (Q1)</option>
+                <option value="Q2">Quincena 2 (Q2)</option>
+                <option value="ABONO">Abono / Otro</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="glass-table">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Marca</th>
+                  <th>Periodo</th>
+                  <th>Monto en Bs</th>
+                  <th>Tasa Aplicada</th>
+                  <th>Total USD</th>
+                  <th>Referencia</th>
+                  <th>Comprobante</th>
+                  <th>Acción</th>
+                </tr>
+              </thead>
+              <tbody id="fullPaymentsHistoryBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- BARRA DE NAVEGACIÓN INFERIOR (MÓVIL) -->
+  <nav class="mobile-bottom-nav liquid-glass">
+    <button class="mobile-nav-btn active" data-target="view-dashboard">
+      <i class="ph-duotone ph-squares-four"></i>
+      <span>Panel</span>
+    </button>
+    <button class="mobile-nav-btn" data-target="view-brands">
+      <i class="ph-duotone ph-briefcase"></i>
+      <span>Marcas</span>
+    </button>
+    <button class="mobile-nav-btn" data-target="view-payments">
+      <i class="ph-duotone ph-receipt"></i>
+      <span>Pagos</span>
+    </button>
+  </nav>
+
+  <!-- MODAL 1: AGREGAR / EDITAR MARCA Y ENTREGABLES -->
+  <div class="modal-backdrop" id="brandFormModal">
+    <div class="modal-glass-box modal-lg liquid-glass">
+      <div class="section-header">
+        <h3 id="brandModalTitle"><i class="ph-duotone ph-folder-plus"></i> Agregar Marca Cliente</h3>
+        <button type="button" class="icon-action-btn" id="btnCloseBrandModal" title="Cerrar ventana">
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+      <p style="font-size:0.83rem;color:var(--text-secondary);margin-top:-10px;">
+        Configura la iguala mensual en dólares y el modo de control para los entregables del mes.
+      </p>
+
+      <form id="brandForm">
+        <input type="hidden" id="brandIdInput" value="" />
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="brandNameInput">Nombre de la Marca *</label>
+            <input type="text" id="brandNameInput" class="glass-input" placeholder="Ej. Café Ávila Gourmet" required />
+          </div>
+
+          <div class="form-group">
+            <label for="brandCategoryInput">Rubro / Categoría</label>
+            <input type="text" id="brandCategoryInput" class="glass-input" placeholder="Ej. Gastronomía, Salud, Real Estate" />
+          </div>
+
+          <div class="form-group">
+            <label for="brandStartInput">Fecha de Inicio *</label>
+            <input type="date" id="brandStartInput" class="glass-input" required />
+          </div>
+
+          <div class="form-group">
+            <label for="brandFeeInput">Monto Mensual Iguala ($ USD) *</label>
+            <input type="number" step="0.01" min="1" id="brandFeeInput" class="glass-input" placeholder="Ej. 500.00" required />
+          </div>
+
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label for="brandModeSelect">Modo de Control de Entregables</label>
+            <select id="brandModeSelect" class="glass-select">
+              <option value="limite">Modo con Límite (Meta Mensual con Barra de Progreso)</option>
+              <option value="libre">Modo Libre (Contador Abierto sin Tope)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Metas Mensuales (Visibles cuando está en Modo con Límite) -->
+        <div class="form-grid" id="quotaInputsContainer" style="margin-top:14px;">
+          <div class="form-group">
+            <label for="quotaFlyersInput">Meta Mensual de Flyers / Posts</label>
+            <input type="number" min="0" id="quotaFlyersInput" class="glass-input" value="12" />
+          </div>
+          <div class="form-group">
+            <label for="quotaVideosInput">Meta Mensual de Videos / Reels</label>
+            <input type="number" min="0" id="quotaVideosInput" class="glass-input" value="8" />
+          </div>
+          <div class="form-group">
+            <label for="quotaStoriesInput">Meta Mensual de Carruseles / Historias</label>
+            <input type="number" min="0" id="quotaStoriesInput" class="glass-input" value="15" />
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;margin-top:22px;justify-content:flex-end;">
+          <button type="button" class="btn-secondary" id="btnCancelBrandEdit">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary">
+            <i class="ph-bold ph-floppy-disk"></i> Guardar Marca
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 2: CARGAR PAGO Y SUBIR CAPTURE -->
+  <div class="modal-backdrop" id="paymentFormModal">
+    <div class="modal-glass-box modal-lg liquid-glass">
+      <div class="section-header">
+        <h3><i class="ph-duotone ph-currency-circle-dollar"></i> Cargar Pago de Quincena o Abono</h3>
+        <button type="button" class="icon-action-btn" id="btnClosePaymentModal" title="Cerrar ventana">
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+      <p style="font-size:0.83rem;color:var(--text-secondary);margin-top:-10px;">
+        Conversión automática de Bolívares (VES) a Dólares ($ USD) según la tasa activa o personalizada.
+      </p>
+
+      <form id="paymentForm">
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="payBrandSelect">Seleccionar Marca *</label>
+            <select id="payBrandSelect" class="glass-select" required></select>
+          </div>
+
+          <div class="form-group">
+            <label for="payPeriodSelect">Periodo Quincenal *</label>
+            <select id="payPeriodSelect" class="glass-select" required>
+              <option value="Q1">Quincena 1 (Días 1 al 5)</option>
+              <option value="Q2">Quincena 2 (Días 16 al 20)</option>
+              <option value="ABONO">Abono Parcial / Otro</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="payDateInput">Fecha de Pago *</label>
+            <input type="date" id="payDateInput" class="glass-input" required />
+          </div>
+
+          <div class="form-group">
+            <label for="payAmountVesInput">Monto Pagado en Bolívares (Bs) *</label>
+            <input type="number" step="0.01" min="0.01" id="payAmountVesInput" class="glass-input" placeholder="Ej. 11450.00" required />
+          </div>
+
+          <div class="form-group">
+            <label for="payRateInput">Tasa de Cambio Aplicada (Bs/USD) *</label>
+            <input type="number" step="0.0001" min="0.01" id="payRateInput" class="glass-input" required />
+          </div>
+
+          <div class="form-group">
+            <label for="payRefInput">Referencia Bancaria / Nota</label>
+            <input type="text" id="payRefInput" class="glass-input" placeholder="Ej. Pago Móvil #948120" />
+          </div>
+        </div>
+
+        <!-- Vista Previa de Conversión en Tiempo Real -->
+        <div class="conversion-preview-box" style="margin-top:16px;">
+          <div>
+            <span style="font-size:0.75rem;color:var(--text-muted);font-weight:700;">EQUIVALENTE EN DÓLARES</span>
+            <div class="mono-num" id="calcEquivalentUsd" style="font-size:1.55rem;color:var(--accent-primary);">$0.00 USD</div>
+          </div>
+          <div>
+            <span style="font-size:0.75rem;color:var(--text-muted);font-weight:700;">CUOTA DE LA QUINCENA (50%)</span>
+            <div class="mono-num" id="calcExpectedQuincenaUsd" style="font-size:1.15rem;">$0.00 USD</div>
+          </div>
+          <div>
+            <span style="font-size:0.75rem;color:var(--text-muted);font-weight:700;">RESTANTE TRAS ESTE PAGO</span>
+            <div class="mono-num" id="calcRemainingQuincenaUsd" style="font-size:1.15rem;">$0.00 USD</div>
+          </div>
+          <div style="text-align:right;">
+            <button type="button" class="btn-secondary" id="btnFillExactQuincena">
+              <i class="ph ph-magic-wand"></i> Autocompletar 50% en Bs
+            </button>
+          </div>
+        </div>
+
+        <!-- Subida de Capture con Vista Previa Instantánea -->
+        <div style="margin-top:16px;">
+          <label style="font-size:0.8rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:6px;">
+            Subir Capture de Pago (JPG, PNG, WEBP)
+          </label>
+          <div class="capture-dropzone" id="captureDropzone">
+            <input type="file" id="payReceiptFileInput" accept="image/jpeg,image/png,image/webp" style="display:none;" />
+            <i class="ph-duotone ph-cloud-arrow-up" style="font-size:2.1rem;color:var(--accent-primary);"></i>
+            <div style="font-weight:700;font-size:0.9rem;">Arrastra el comprobante aquí o haz clic para seleccionar imagen</div>
+            <small style="color:var(--text-muted);">Vista previa instantánea antes de guardar</small>
+            <img id="capturePreviewImg" class="capture-preview-img" style="display:none;" alt="Vista previa del capture" />
+          </div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:20px;">
+          <button type="button" class="btn-secondary" id="btnCancelPaymentModal">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary">
+            <i class="ph-bold ph-check-circle"></i> Registrar Pago y Guardar Comprobante
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL LIGHTBOX PARA VISUALIZAR CAPTURE -->
+  <div class="modal-backdrop" id="receiptLightboxModal">
+    <div class="modal-glass-box liquid-glass">
+      <div class="section-header">
+        <h3 id="lightboxTitle"><i class="ph-duotone ph-image"></i> Comprobante de Pago</h3>
+        <button class="icon-action-btn" id="btnCloseLightbox" title="Cerrar vista previa">
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+      <div id="lightboxMetaInfo" style="font-size:0.84rem;color:var(--text-secondary);"></div>
+      <img id="lightboxImage" class="lightbox-img" src="" alt="Capture de Pago" />
+    </div>
+  </div>
+
+  <!-- CONTENEDOR DE NOTIFICACIONES TOAST -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script>
+    /**
+     * ========================================================================
+     * LÓGICA PRINCIPAL SPA (ES6+) - GESTIÓN DE AGENCIA LIQUID GLASS
+     * Con soporte automático para Backend PHP/MySQL (`api.php`) y Fallback Demo
+     * ========================================================================
+     */
+    const STORAGE_KEYS = {
+      THEME: 'lg_agency_theme_v1',
+      DEMO_STATE: 'lg_agency_demo_state_v1',
+      RATE_VALUE: 'lg_agency_rate_ves_v1',
+      RATE_MODE: 'lg_agency_rate_mode_v1'
+    };
+
+    const currentYearMonth = new Date().toISOString().slice(0, 7);
+    const todayIsoDate = new Date().toISOString().slice(0, 10);
+
+    /**
+     * Genera un comprobante SVG en Base64 para que los pagos de prueba tengan capture visible
+     */
+    function createSampleReceiptDataUrl(brandName, amountVes, amountUsd, ref, dateStr) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="520" height="640" viewBox="0 0 520 640">
+        <defs>
+          <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#0f172a"/>
+            <stop offset="100%" stop-color="#1d4ed8"/>
+          </linearGradient>
+        </defs>
+        <rect width="520" height="640" rx="28" fill="url(#bg)"/>
+        <rect x="28" y="28" width="464" height="584" rx="20" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.22)"/>
+        <circle cx="260" cy="105" r="36" fill="#10b981"/>
+        <path d="M244 105 l11 11 l22 -22" stroke="#ffffff" stroke-width="5" fill="none" stroke-linecap="round"/>
+        <text x="260" y="172" text-anchor="middle" fill="#f8fafc" font-family="sans-serif" font-size="22" font-weight="bold">COMPROBANTE DE PAGO</text>
+        <text x="260" y="198" text-anchor="middle" fill="#93c5fd" font-family="sans-serif" font-size="14">Operación Bancaria Aprobada</text>
+        <line x1="60" y1="226" x2="460" y2="226" stroke="rgba(255,255,255,0.18)"/>
+        <text x="65" y="272" fill="#93c5fd" font-family="sans-serif" font-size="14">CLIENTE / MARCA:</text>
+        <text x="455" y="272" text-anchor="end" fill="#ffffff" font-family="sans-serif" font-size="15" font-weight="bold">${brandName}</text>
+        <text x="65" y="322" fill="#93c5fd" font-family="sans-serif" font-size="14">MONTO EN BOLÍVARES:</text>
+        <text x="455" y="322" text-anchor="end" fill="#38bdf8" font-family="monospace" font-size="20" font-weight="bold">Bs. ${Number(amountVes).toLocaleString('es-VE', {minimumFractionDigits:2})}</text>
+        <text x="65" y="372" fill="#93c5fd" font-family="sans-serif" font-size="14">EQUIVALENTE USD:</text>
+        <text x="455" y="372" text-anchor="end" fill="#6ee7b7" font-family="monospace" font-size="18" font-weight="bold">$${Number(amountUsd).toFixed(2)} USD</text>
+        <text x="65" y="422" fill="#93c5fd" font-family="sans-serif" font-size="14">REFERENCIA:</text>
+        <text x="455" y="422" text-anchor="end" fill="#ffffff" font-family="monospace" font-size="15">${ref}</text>
+        <text x="65" y="472" fill="#93c5fd" font-family="sans-serif" font-size="14">FECHA DE OPERACIÓN:</text>
+        <text x="455" y="472" text-anchor="end" fill="#ffffff" font-family="monospace" font-size="15">${dateStr}</text>
+        <rect x="60" y="520" width="400" height="54" rx="12" fill="rgba(255,255,255,0.06)"/>
+        <text x="260" y="552" text-anchor="middle" fill="#bae6fd" font-family="sans-serif" font-size="13">Verificado por LiquidGlass Agency OS</text>
+      </svg>`;
+      return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+    }
+
+    const appState = {
+      isBackendConnected: false,
+      selectedMonth: currentYearMonth,
+      exchangeRate: parseFloat(localStorage.getItem(STORAGE_KEYS.RATE_VALUE)) || 45.80,
+      exchangeMode: localStorage.getItem(STORAGE_KEYS.RATE_MODE) || 'auto',
+      currentCaptureBase64: null,
+      brands: [],
+      payments: []
+    };
+
+    function getDefaultDemoData(monthYear) {
+      return {
+        brands: [
+          {
+            id: 1,
+            name: 'Café Ávila Gourmet',
+            category: 'Gastronomía & Specialty Coffee',
+            start_date: '2025-01-10',
+            monthly_fee_usd: 480.00,
+            tracking_mode: 'limite',
+            deliverables: {
+              flyers_done: 9, flyers_quota: 12,
+              videos_done: 6, videos_quota: 8,
+              stories_done: 14, stories_quota: 20
+            }
+          },
+          {
+            id: 2,
+            name: 'Clínica Dental Sonrisa',
+            category: 'Salud & Odontología Estética',
+            start_date: '2025-02-01',
+            monthly_fee_usd: 650.00,
+            tracking_mode: 'limite',
+            deliverables: {
+              flyers_done: 12, flyers_quota: 12,
+              videos_done: 5, videos_quota: 6,
+              stories_done: 15, stories_quota: 15
+            }
+          },
+          {
+            id: 3,
+            name: 'Inmobiliaria Costa Azul',
+            category: 'Bienes Raíces Luxury',
+            start_date: '2025-01-15',
+            monthly_fee_usd: 800.00,
+            tracking_mode: 'libre',
+            deliverables: {
+              flyers_done: 16, flyers_quota: 0,
+              videos_done: 11, videos_quota: 0,
+              stories_done: 28, stories_quota: 0
+            }
+          },
+          {
+            id: 4,
+            name: 'TechNova Store VE',
+            category: 'E-Commerce & Electrónica',
+            start_date: '2025-03-01',
+            monthly_fee_usd: 420.00,
+            tracking_mode: 'limite',
+            deliverables: {
+              flyers_done: 5, flyers_quota: 10,
+              videos_done: 2, videos_quota: 6,
+              stories_done: 8, stories_quota: 12
+            }
+          }
+        ],
+        payments: [
+          {
+            id: 101,
+            brand_id: 1,
+            brand_name: 'Café Ávila Gourmet',
+            period_type: 'Q1',
+            month_year: monthYear,
+            payment_date: `${monthYear}-03`,
+            amount_ves: 10992.00,
+            exchange_rate: 45.80,
+            amount_usd: 240.00,
+            reference_code: 'PM-884120',
+            receipt_path: createSampleReceiptDataUrl('Café Ávila Gourmet', 10992.00, 240.00, 'PM-884120', `${monthYear}-03`)
+          },
+          {
+            id: 102,
+            brand_id: 2,
+            brand_name: 'Clínica Dental Sonrisa',
+            period_type: 'Q1',
+            month_year: monthYear,
+            payment_date: `${monthYear}-04`,
+            amount_ves: 14885.00,
+            exchange_rate: 45.80,
+            amount_usd: 325.00,
+            reference_code: 'TRF-992011',
+            receipt_path: createSampleReceiptDataUrl('Clínica Dental Sonrisa', 14885.00, 325.00, 'TRF-992011', `${monthYear}-04`)
+          },
+          {
+            id: 103,
+            brand_id: 2,
+            brand_name: 'Clínica Dental Sonrisa',
+            period_type: 'Q2',
+            month_year: monthYear,
+            payment_date: `${monthYear}-17`,
+            amount_ves: 14885.00,
+            exchange_rate: 45.80,
+            amount_usd: 325.00,
+            reference_code: 'TRF-998450',
+            receipt_path: createSampleReceiptDataUrl('Clínica Dental Sonrisa', 14885.00, 325.00, 'TRF-998450', `${monthYear}-17`)
+          },
+          {
+            id: 104,
+            brand_id: 3,
+            brand_name: 'Inmobiliaria Costa Azul',
+            period_type: 'Q1',
+            month_year: monthYear,
+            payment_date: `${monthYear}-05`,
+            amount_ves: 11450.00,
+            exchange_rate: 45.80,
+            amount_usd: 250.00,
+            reference_code: 'BIN-773190',
+            receipt_path: createSampleReceiptDataUrl('Inmobiliaria Costa Azul', 11450.00, 250.00, 'BIN-773190', `${monthYear}-05`)
+          }
+        ]
+      };
+    }
+
+    function formatUsd(val) {
+      return '$' + Number(val || 0).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function formatVes(val) {
+      return 'Bs. ' + Number(val || 0).toLocaleString('es-VE', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function showToast(message, icon = 'ph-check-circle') {
+      const container = document.getElementById('toastContainer');
+      const item = document.createElement('div');
+      item.className = 'toast-item';
+      item.innerHTML = `<i class="ph-fill ${icon}" style="font-size:1.25rem;color:var(--accent-primary);"></i><span>${message}</span>`;
+      container.appendChild(item);
+      setTimeout(() => {
+        item.style.opacity = '0';
+        item.style.transform = 'translateY(6px)';
+        setTimeout(() => item.remove(), 260);
+      }, 3400);
+    }
+
+    async function fetchOfficialExchangeRate(forceAuto = false) {
+      if (appState.exchangeMode === 'manual' && !forceAuto) {
+        updateExchangeRateUI();
+        return;
+      }
+
+      const rateStatusText = document.getElementById('rateStatusText');
+      rateStatusText.textContent = 'Sincronizando...';
+
+      try {
+        const response = await fetch('https://ve.dolarapi.com/v1/dolares/oficial', { cache: 'no-store' });
+        if (!response.ok) throw new Error('Error HTTP en API de tasa');
+        const data = await response.json();
+        const fetchedRate = parseFloat(data?.promedio || data?.venta || 0);
+
+        if (fetchedRate > 0) {
+          appState.exchangeRate = Number(fetchedRate.toFixed(2));
+          appState.exchangeMode = 'auto';
+          localStorage.setItem(STORAGE_KEYS.RATE_VALUE, String(appState.exchangeRate));
+          localStorage.setItem(STORAGE_KEYS.RATE_MODE, 'auto');
+          updateExchangeRateUI();
+          renderAllViews();
+          showToast(`Tasa BCV sincronizada: Bs. ${appState.exchangeRate.toFixed(2)} / USD`, 'ph-currency-dollar');
+          return;
+        }
+      } catch (err) {
+        // Fallback silencioso a la última tasa guardada
+      }
+
+      updateExchangeRateUI();
+    }
+
+    function updateExchangeRateUI() {
+      const displayEl = document.getElementById('rateDisplayValue');
+      const statusEl = document.getElementById('rateStatusText');
+      const payRateInput = document.getElementById('payRateInput');
+
+      displayEl.textContent = `Bs. ${appState.exchangeRate.toFixed(2)}`;
+      statusEl.textContent = appState.exchangeMode === 'manual' ? 'Manual Activo' : 'Auto API BCV';
+
+      if (payRateInput && (!payRateInput.dataset.touched || payRateInput.value === '')) {
+        payRateInput.value = appState.exchangeRate.toFixed(2);
+      }
+      updateRealtimePaymentConversion();
+    }
+
+    /**
+     * Calcula el estado de Q1 (Días 1-5) y Q2 (Días 16-20) para una marca en el mes seleccionado
+     */
+    function evaluateBrandBiweeklyStatus(brand) {
+      const halfQuota = Number((brand.monthly_fee_usd / 2).toFixed(2));
+      const brandPayments = appState.payments.filter(
+        p => Number(p.brand_id) === Number(brand.id) && p.month_year === appState.selectedMonth
+      );
+
+      const q1Paid = brandPayments
+        .filter(p => p.period_type === 'Q1')
+        .reduce((acc, p) => acc + Number(p.amount_usd), 0);
+
+      const q2Paid = brandPayments
+        .filter(p => p.period_type === 'Q2')
+        .reduce((acc, p) => acc + Number(p.amount_usd), 0);
+
+      const abonoPaid = brandPayments
+        .filter(p => p.period_type === 'ABONO')
+        .reduce((acc, p) => acc + Number(p.amount_usd), 0);
+
+      const totalPaidUsd = Number((q1Paid + q2Paid + abonoPaid).toFixed(2));
+      const totalPaidVes = brandPayments.reduce((acc, p) => acc + Number(p.amount_ves), 0);
+      const pendingMonthUsd = Math.max(0, Number((brand.monthly_fee_usd - totalPaidUsd).toFixed(2)));
+
+      // Determinar día de referencia según el mes consultado vs fecha actual
+      const now = new Date();
+      const nowYm = now.toISOString().slice(0, 7);
+      let referenceDay = now.getDate();
+      if (appState.selectedMonth < nowYm) referenceDay = 31; // Mes pasado
+      if (appState.selectedMonth > nowYm) referenceDay = 1;  // Mes futuro
+
+      function buildInstallmentBadge(paidAmount, dueDayCutoff) {
+        const remaining = Math.max(0, Number((halfQuota - paidAmount).toFixed(2)));
+        if (paidAmount >= halfQuota - 0.05) {
+          return {
+            code: 'PAGADO',
+            label: 'Pagado',
+            css: 'paid',
+            icon: 'ph-check-circle',
+            paidUsd: paidAmount,
+            remainingUsd: 0
+          };
+        }
+        if (paidAmount > 0 && paidAmount < halfQuota) {
+          return {
+            code: 'PARCIAL',
+            label: `Pago Parcial (Restan ${formatUsd(remaining)})`,
+            css: 'partial',
+            icon: 'ph-pie-chart',
+            paidUsd: paidAmount,
+            remainingUsd: remaining
+          };
+        }
+        if (referenceDay > dueDayCutoff) {
+          return {
+            code: 'VENCIDO',
+            label: 'Vencido',
+            css: 'overdue',
+            icon: 'ph-warning-octagon',
+            paidUsd: 0,
+            remainingUsd: halfQuota
+          };
+        }
+        return {
+          code: 'PENDIENTE',
+          label: 'Pendiente - En Fecha',
+          css: 'ontime',
+          icon: 'ph-clock',
+          paidUsd: 0,
+          remainingUsd: halfQuota
+        };
+      }
+
+      return {
+        halfQuota,
+        q1: buildInstallmentBadge(q1Paid, 5),
+        q2: buildInstallmentBadge(q2Paid, 20),
+        totalPaidUsd,
+        totalPaidVes,
+        pendingMonthUsd
+      };
+    }
+
+    async function loadApplicationData() {
+      try {
+        const res = await fetch(`api.php?action=bootstrap&month=${encodeURIComponent(appState.selectedMonth)}`, {
+          headers: { 'Accept': 'application/json' }
+        });
+        if (!res.ok) throw new Error('Backend no disponible');
+        const json = await res.json();
+        if (!json.success) throw new Error(json.message || 'Respuesta inválida');
+
+        appState.isBackendConnected = true;
+        appState.brands = json.data.brands || [];
+        appState.payments = json.data.payments || [];
+
+        if (json.data.settings?.exchange_rate_ves && appState.exchangeMode !== 'manual') {
+          appState.exchangeRate = parseFloat(json.data.settings.exchange_rate_ves) || appState.exchangeRate;
+        }
+      } catch (e) {
+        // Activar Modo Demo en localStorage si no hay servidor PHP activo
+        appState.isBackendConnected = false;
+        const rawSaved = localStorage.getItem(STORAGE_KEYS.DEMO_STATE);
+        if (rawSaved) {
+          const parsed = JSON.parse(rawSaved);
+          appState.brands = parsed.brands || [];
+          appState.payments = parsed.payments || [];
+        } else {
+          const seed = getDefaultDemoData(appState.selectedMonth);
+          appState.brands = seed.brands;
+          appState.payments = seed.payments;
+          saveDemoStateToStorage();
+        }
+      }
+
+      updateConnectionStatusIndicator();
+      renderAllViews();
+    }
+
+    function saveDemoStateToStorage() {
+      localStorage.setItem(STORAGE_KEYS.DEMO_STATE, JSON.stringify({
+        brands: appState.brands,
+        payments: appState.payments
+      }));
+    }
+
+    function updateConnectionStatusIndicator() {
+      const dot = document.getElementById('connectionDot');
+      const label = document.getElementById('connectionLabel');
+      const sub = document.getElementById('connectionSub');
+
+      if (appState.isBackendConnected) {
+        dot.classList.remove('demo');
+        label.textContent = 'Servidor MySQL Conectado';
+        sub.textContent = 'PDO API activa (api.php)';
+      } else {
+        dot.classList.add('demo');
+        label.textContent = 'Modo Demo Interactivo';
+        sub.textContent = 'Persistencia local activa';
+      }
+    }
+
+    function renderAllViews() {
+      renderDashboardView();
+      renderBrandsView();
+      populateBrandSelects();
+      renderPaymentsHistoryTable();
+      updateRealtimePaymentConversion();
+    }
+
+    function renderDashboardView() {
+      let totalExpectedUsd = 0;
+      let totalCollectedUsd = 0;
+      let totalCollectedVes = 0;
+      let totalDeliverablesDone = 0;
+
+      const biweeklyBody = document.getElementById('biweeklyStatusTableBody');
+      biweeklyBody.innerHTML = '';
+
+      appState.brands.forEach(brand => {
+        const status = evaluateBrandBiweeklyStatus(brand);
+        totalExpectedUsd += Number(brand.monthly_fee_usd);
+        totalCollectedUsd += status.totalPaidUsd;
+        totalCollectedVes += status.totalPaidVes;
+
+        const deliv = brand.deliverables || {};
+        totalDeliverablesDone += (Number(deliv.flyers_done || 0) + Number(deliv.videos_done || 0) + Number(deliv.stories_done || 0));
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>
+            <div>${brand.name}</div>
+            <small style="color:var(--text-muted);font-weight:500;">${brand.category || 'Marketing Digital'}</small>
+          </td>
+          <td class="mono-num">
+            ${formatUsd(brand.monthly_fee_usd)}
+            <div style="font-size:0.73rem;color:var(--text-muted);">50%: ${formatUsd(status.halfQuota)}</div>
+          </td>
+          <td>
+            <span class="status-badge ${status.q1.css}">
+              <i class="ph-bold ${status.q1.icon}"></i> ${status.q1.label}
+            </span>
+          </td>
+          <td>
+            <span class="status-badge ${status.q2.css}">
+              <i class="ph-bold ${status.q2.icon}"></i> ${status.q2.label}
+            </span>
+          </td>
+          <td class="mono-num" style="font-weight:700;color:${status.pendingMonthUsd > 0 ? 'var(--text-primary)' : '#10b981'};">
+            ${status.pendingMonthUsd > 0 ? formatUsd(status.pendingMonthUsd) : 'Solvente'}
+          </td>
+        `;
+        biweeklyBody.appendChild(tr);
+      });
+
+      const totalPendingUsd = Math.max(0, totalExpectedUsd - totalCollectedUsd);
+
+      document.getElementById('kpiExpectedUsd').textContent = formatUsd(totalExpectedUsd);
+      document.getElementById('kpiExpectedVes').textContent = `Eq. ${formatVes(totalExpectedUsd * appState.exchangeRate)}`;
+
+      document.getElementById('kpiCollectedUsd').textContent = formatUsd(totalCollectedUsd);
+      document.getElementById('kpiCollectedVes').textContent = `${formatVes(totalCollectedVes)} recibidos`;
+
+      document.getElementById('kpiPendingUsd').textContent = formatUsd(totalPendingUsd);
+      document.getElementById('kpiPendingVes').textContent = `Eq. ${formatVes(totalPendingUsd * appState.exchangeRate)} por cobrar`;
+
+      document.getElementById('kpiActiveBrands').textContent = String(appState.brands.length);
+      document.getElementById('kpiDeliverablesSummary').textContent = `${totalDeliverablesDone} piezas entregadas este mes`;
+
+      // Renderizar calendario visual de ventanas Q1 (1-5) y Q2 (16-20)
+      const todayNum = new Date().getDate();
+      document.getElementById('currentDayIndicator').textContent = `Hoy: Día ${todayNum}`;
+
+      const q1Strip = document.getElementById('q1DaysStrip');
+      const q2Strip = document.getElementById('q2DaysStrip');
+      q1Strip.innerHTML = '';
+      q2Strip.innerHTML = '';
+
+      [1, 2, 3, 4, 5].forEach(d => {
+        const pill = document.createElement('div');
+        pill.className = 'day-pill' + (todayNum === d ? ' today' : '');
+        pill.textContent = `Día ${d}`;
+        q1Strip.appendChild(pill);
+      });
+
+      [16, 17, 18, 19, 20].forEach(d => {
+        const pill = document.createElement('div');
+        pill.className = 'day-pill' + (todayNum === d ? ' today' : '');
+        pill.textContent = `Día ${d}`;
+        q2Strip.appendChild(pill);
+      });
+
+      document.getElementById('q1WindowCard').classList.toggle('active-window', todayNum >= 1 && todayNum <= 5);
+      document.getElementById('q2WindowCard').classList.toggle('active-window', todayNum >= 16 && todayNum <= 20);
+
+      // Renderizar últimos pagos en el Dashboard
+      const recentBody = document.getElementById('recentPaymentsTableBody');
+      recentBody.innerHTML = '';
+      const monthPayments = appState.payments
+        .filter(p => p.month_year === appState.selectedMonth)
+        .slice(0, 5);
+
+      if (monthPayments.length === 0) {
+        recentBody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">Sin pagos registrados en este mes</td></tr>`;
+      } else {
+        monthPayments.forEach(p => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${p.brand_name || getBrandNameById(p.brand_id)}</td>
+            <td><span class="status-badge ontime">${p.period_type}</span></td>
+            <td class="mono-num">
+              ${formatUsd(p.amount_usd)}
+              <div style="font-size:0.72rem;color:var(--text-muted);">${formatVes(p.amount_ves)}</div>
+            </td>
+            <td>
+              ${p.receipt_path
+                ? `<button class="btn-secondary btn-view-capture" data-payment-id="${p.id}" style="padding:6px 10px;font-size:0.76rem;">
+                     <i class="ph ph-eye"></i> Ver
+                   </button>`
+                : `<span style="font-size:0.75rem;color:var(--text-muted);">Sin archivo</span>`}
+            </td>
+          `;
+          recentBody.appendChild(tr);
+        });
+      }
+    }
+
+    function getBrandNameById(brandId) {
+      const found = appState.brands.find(b => Number(b.id) === Number(brandId));
+      return found ? found.name : 'Marca';
+    }
+
+    function renderBrandsView() {
+      const grid = document.getElementById('brandsCardsGrid');
+      grid.innerHTML = '';
+
+      appState.brands.forEach(brand => {
+        const status = evaluateBrandBiweeklyStatus(brand);
+        const deliv = brand.deliverables || {
+          flyers_done: 0, flyers_quota: 12,
+          videos_done: 0, videos_quota: 8,
+          stories_done: 0, stories_quota: 15
+        };
+        const isLimitMode = brand.tracking_mode === 'limite';
+
+        const card = document.createElement('article');
+        card.className = 'brand-card liquid-glass';
+
+        const buildDeliverableRow = (key, label, icon, done, quota) => {
+          const pct = isLimitMode && quota > 0 ? Math.min(100, Math.round((done / quota) * 100)) : 100;
+          const readout = isLimitMode ? `${done} / ${quota}` : `${done} creados`;
+          return `
+            <div class="deliverable-item">
+              <div class="deliverable-row-top">
+                <div class="deliverable-name">
+                  <i class="ph-duotone ${icon}"></i>
+                  <span>${label}</span>
+                </div>
+                <div class="counter-controls">
+                  <button class="step-btn" data-action="step-deliv" data-brand="${brand.id}" data-type="${key}" data-delta="-1" title="Restar 1">-</button>
+                  <span class="counter-readout">${readout}</span>
+                  <button class="step-btn" data-action="step-deliv" data-brand="${brand.id}" data-type="${key}" data-delta="1" title="Sumar 1">+</button>
+                </div>
+              </div>
+              ${isLimitMode ? `
+                <div class="progress-track">
+                  <div class="progress-fill" style="width:${pct}%;"></div>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        };
+
+        card.innerHTML = `
+          <div class="brand-card-header">
+            <div class="brand-title-group">
+              <h4>${brand.name}</h4>
+              <span class="brand-category-tag">${brand.category || 'Marketing Digital'} • Inicio: ${brand.start_date}</span>
+            </div>
+            <div class="retainer-pill">${formatUsd(brand.monthly_fee_usd)}/mes</div>
+          </div>
+
+          <div class="brand-quincenas-row">
+            <div class="quincena-mini-card">
+              <div class="quincena-mini-top">
+                <span>Q1 (Días 1-5)</span>
+                <span class="mono-num">${formatUsd(status.halfQuota)}</span>
+              </div>
+              <div>
+                <span class="status-badge ${status.q1.css}" style="font-size:0.7rem;padding:4px 9px;">
+                  <i class="ph-bold ${status.q1.icon}"></i> ${status.q1.code}
+                </span>
+              </div>
+            </div>
+
+            <div class="quincena-mini-card">
+              <div class="quincena-mini-top">
+                <span>Q2 (Días 16-20)</span>
+                <span class="mono-num">${formatUsd(status.halfQuota)}</span>
+              </div>
+              <div>
+                <span class="status-badge ${status.q2.css}" style="font-size:0.7rem;padding:4px 9px;">
+                  <i class="ph-bold ${status.q2.icon}"></i> ${status.q2.code}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.78rem;color:var(--text-secondary);font-weight:700;">
+            <span>ENTREGABLES DEL MES (${isLimitMode ? 'Modo con Límite' : 'Modo Libre'})</span>
+            <span class="mono-num">${formatVes(brand.monthly_fee_usd * appState.exchangeRate)}</span>
+          </div>
+
+          <div class="deliverables-list">
+            ${buildDeliverableRow('flyers', 'Flyers / Posts', 'ph-image-square', deliv.flyers_done, deliv.flyers_quota)}
+            ${buildDeliverableRow('videos', 'Videos / Reels', 'ph-film-strip', deliv.videos_done, deliv.videos_quota)}
+            ${buildDeliverableRow('stories', 'Carruseles / Historias', 'ph-cards', deliv.stories_done, deliv.stories_quota)}
+          </div>
+
+          <div style="display:flex;justify-content:space-between;gap:8px;margin-top:4px;">
+            <button class="btn-secondary" data-action="edit-brand" data-brand="${brand.id}" style="flex:1;justify-content:center;">
+              <i class="ph ph-Sliders"></i> Editar Marca
+            </button>
+            <button class="btn-secondary" data-action="quick-pay-brand" data-brand="${brand.id}" style="flex:1;justify-content:center;">
+              <i class="ph ph-hand-coins"></i> Cargar Pago
+            </button>
+            <button class="icon-action-btn" data-action="delete-brand" data-brand="${brand.id}" title="Eliminar marca">
+              <i class="ph ph-trash"></i>
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    async function updateDeliverableCounter(brandId, type, delta) {
+      const brand = appState.brands.find(b => Number(b.id) === Number(brandId));
+      if (!brand) return;
+
+      const propMap = {
+        flyers: 'flyers_done',
+        videos: 'videos_done',
+        stories: 'stories_done'
+      };
+      const field = propMap[type];
+      if (!field) return;
+
+      brand.deliverables[field] = Math.max(0, Number(brand.deliverables[field] || 0) + delta);
+
+      if (appState.isBackendConnected) {
+        try {
+          await fetch('api.php?action=update_deliverable', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              brand_id: brandId,
+              month_year: appState.selectedMonth,
+              type,
+              delta
+            })
+          });
+        } catch (err) {
+          // Respaldo local automático
+        }
+      } else {
+        saveDemoStateToStorage();
+      }
+
+      renderAllViews();
+    }
+
+    function populateBrandSelects() {
+      const paySelect = document.getElementById('payBrandSelect');
+      const filterSelect = document.getElementById('historyFilterBrand');
+      const currentPayVal = paySelect.value;
+      const currentFilterVal = filterSelect.value || 'ALL';
+
+      paySelect.innerHTML = '';
+      filterSelect.innerHTML = '<option value="ALL">Todas las marcas</option>';
+
+      appState.brands.forEach(b => {
+        const opt1 = document.createElement('option');
+        opt1.value = b.id;
+        opt1.textContent = `${b.name} (${formatUsd(b.monthly_fee_usd)}/mes)`;
+        paySelect.appendChild(opt1);
+
+        const opt2 = document.createElement('option');
+        opt2.value = b.id;
+        opt2.textContent = b.name;
+        filterSelect.appendChild(opt2);
+      });
+
+      if (currentPayVal && [...paySelect.options].some(o => o.value === currentPayVal)) {
+        paySelect.value = currentPayVal;
+      }
+      filterSelect.value = currentFilterVal;
+    }
+
+    function updateRealtimePaymentConversion() {
+      const brandId = Number(document.getElementById('payBrandSelect').value || 0);
+      const period = document.getElementById('payPeriodSelect').value;
+      const amountVes = parseFloat(document.getElementById('payAmountVesInput').value) || 0;
+      const rate = parseFloat(document.getElementById('payRateInput').value) || appState.exchangeRate;
+
+      const eqUsd = rate > 0 ? Number((amountVes / rate).toFixed(2)) : 0;
+      document.getElementById('calcEquivalentUsd').textContent = `${formatUsd(eqUsd)} USD`;
+
+      const brand = appState.brands.find(b => Number(b.id) === brandId);
+      if (!brand) return;
+
+      const status = evaluateBrandBiweeklyStatus(brand);
+      let currentRemaining = status.pendingMonthUsd;
+      if (period === 'Q1') currentRemaining = status.q1.remainingUsd;
+      if (period === 'Q2') currentRemaining = status.q2.remainingUsd;
+
+      const afterPaymentRemaining = Math.max(0, Number((currentRemaining - eqUsd).toFixed(2)));
+      document.getElementById('calcExpectedQuincenaUsd').textContent = `${formatUsd(status.halfQuota)} USD`;
+      document.getElementById('calcRemainingQuincenaUsd').textContent = `${formatUsd(afterPaymentRemaining)} USD`;
+    }
+
+    function renderPaymentsHistoryTable() {
+      const tbody = document.getElementById('fullPaymentsHistoryBody');
+      const filterBrand = document.getElementById('historyFilterBrand').value;
+      const filterPeriod = document.getElementById('historyFilterPeriod').value;
+
+      tbody.innerHTML = '';
+
+      const filtered = appState.payments.filter(p => {
+        const matchMonth = p.month_year === appState.selectedMonth;
+        const matchBrand = filterBrand === 'ALL' || String(p.brand_id) === String(filterBrand);
+        const matchPeriod = filterPeriod === 'ALL' || p.period_type === filterPeriod;
+        return matchMonth && matchBrand && matchPeriod;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:22px;">No se encontraron pagos con los filtros seleccionados.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(p => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="mono-num">${p.payment_date}</td>
+          <td>${p.brand_name || getBrandNameById(p.brand_id)}</td>
+          <td><span class="status-badge ontime">${p.period_type}</span></td>
+          <td class="mono-num">${formatVes(p.amount_ves)}</td>
+          <td class="mono-num">Bs. ${Number(p.exchange_rate).toFixed(2)}</td>
+          <td class="mono-num" style="color:var(--accent-primary);font-weight:800;">${formatUsd(p.amount_usd)}</td>
+          <td>${p.reference_code || '—'}</td>
+          <td>
+            ${p.receipt_path
+              ? `<button class="btn-secondary btn-view-capture" data-payment-id="${p.id}" style="padding:6px 12px;font-size:0.78rem;">
+                   <i class="ph ph-image"></i> Ver Capture
+                 </button>`
+              : `<span style="color:var(--text-muted);font-size:0.78rem;">No adjunto</span>`}
+          </td>
+          <td>
+            <button class="icon-action-btn" data-action="delete-payment" data-payment-id="${p.id}" title="Eliminar registro">
+              <i class="ph ph-trash"></i>
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function switchView(targetId) {
+      document.querySelectorAll('.view-section').forEach(sec => {
+        sec.classList.toggle('active', sec.id === targetId);
+      });
+      document.querySelectorAll('.nav-btn, .mobile-nav-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.target === targetId);
+      });
+
+      const titles = {
+        'view-dashboard': 'Panel Ejecutivo de Cobranza',
+        'view-brands': 'Gestión de Marcas y Entregables',
+        'view-payments': 'Control de Pagos y Captures Quincenales'
+      };
+      document.getElementById('currentViewTitle').textContent = titles[targetId] || 'LiquidGlass Agency';
+    }
+
+    function openBrandModal(brandToEdit = null) {
+      const modal = document.getElementById('brandFormModal');
+      const titleEl = document.getElementById('brandModalTitle');
+      const form = document.getElementById('brandForm');
+
+      form.reset();
+      if (brandToEdit) {
+        titleEl.innerHTML = `<i class="ph-duotone ph-sliders"></i> Editar Marca — ${brandToEdit.name}`;
+        document.getElementById('brandIdInput').value = brandToEdit.id;
+        document.getElementById('brandNameInput').value = brandToEdit.name;
+        document.getElementById('brandCategoryInput').value = brandToEdit.category || '';
+        document.getElementById('brandStartInput').value = brandToEdit.start_date;
+        document.getElementById('brandFeeInput').value = brandToEdit.monthly_fee_usd;
+        document.getElementById('brandModeSelect').value = brandToEdit.tracking_mode;
+        document.getElementById('quotaFlyersInput').value = brandToEdit.deliverables?.flyers_quota ?? 12;
+        document.getElementById('quotaVideosInput').value = brandToEdit.deliverables?.videos_quota ?? 8;
+        document.getElementById('quotaStoriesInput').value = brandToEdit.deliverables?.stories_quota ?? 15;
+        document.getElementById('quotaInputsContainer').style.display =
+          brandToEdit.tracking_mode === 'limite' ? 'grid' : 'none';
+      } else {
+        titleEl.innerHTML = `<i class="ph-duotone ph-folder-plus"></i> Agregar Nueva Marca Cliente`;
+        document.getElementById('brandIdInput').value = '';
+        document.getElementById('brandStartInput').value = todayIsoDate;
+        document.getElementById('brandModeSelect').value = 'limite';
+        document.getElementById('quotaInputsContainer').style.display = 'grid';
+      }
+
+      modal.classList.add('open');
+      setTimeout(() => document.getElementById('brandNameInput').focus(), 120);
+    }
+
+    function closeBrandModal() {
+      document.getElementById('brandFormModal').classList.remove('open');
+    }
+
+    function openPaymentModal(preselectedBrandId = null) {
+      populateBrandSelects();
+      const modal = document.getElementById('paymentFormModal');
+      if (preselectedBrandId) {
+        document.getElementById('payBrandSelect').value = String(preselectedBrandId);
+      }
+      document.getElementById('payDateInput').value = todayIsoDate;
+      document.getElementById('payRateInput').value = appState.exchangeRate.toFixed(2);
+      updateRealtimePaymentConversion();
+      modal.classList.add('open');
+      setTimeout(() => document.getElementById('payAmountVesInput').focus(), 120);
+    }
+
+    function closePaymentModal() {
+      document.getElementById('paymentFormModal').classList.remove('open');
+    }
+
+    function openReceiptLightbox(paymentId) {
+      const payment = appState.payments.find(p => Number(p.id) === Number(paymentId));
+      if (!payment || !payment.receipt_path) return;
+
+      document.getElementById('lightboxTitle').innerHTML = `<i class="ph-duotone ph-image"></i> Capture — ${payment.brand_name || getBrandNameById(payment.brand_id)}`;
+      document.getElementById('lightboxMetaInfo').textContent =
+        `Periodo: ${payment.period_type} • Fecha: ${payment.payment_date} • Monto: ${formatVes(payment.amount_ves)} (${formatUsd(payment.amount_usd)} a tasa Bs. ${Number(payment.exchange_rate).toFixed(2)})`;
+      document.getElementById('lightboxImage').src = payment.receipt_path;
+      document.getElementById('receiptLightboxModal').classList.add('open');
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // Inicializar Tema Claro / Oscuro desde localStorage
+      const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      document.getElementById('themeIcon').className = savedTheme === 'dark' ? 'ph ph-sun-dim' : 'ph ph-moon-stars';
+
+      // Inicializar fechas por defecto
+      document.getElementById('monthFilterInput').value = appState.selectedMonth;
+      document.getElementById('brandStartInput').value = todayIsoDate;
+      document.getElementById('payDateInput').value = todayIsoDate;
+      document.getElementById('payRateInput').value = appState.exchangeRate.toFixed(2);
+
+      // Cargar datos y tasa oficial
+      loadApplicationData();
+      fetchOfficialExchangeRate(false);
+
+      // Navegación SPA
+      document.querySelectorAll('.nav-btn, .mobile-nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchView(btn.dataset.target));
+      });
+
+      // Botones de apertura de Modales (Panel Principal, Sección Marcas y Sección Pagos)
+      document.getElementById('btnDashboardAddBrand').addEventListener('click', () => openBrandModal());
+      document.getElementById('btnOpenBrandModalSection').addEventListener('click', () => openBrandModal());
+
+      document.getElementById('btnDashboardAddPayment').addEventListener('click', () => openPaymentModal());
+      document.getElementById('btnOpenPaymentModalSection').addEventListener('click', () => openPaymentModal());
+      document.getElementById('btnQuickGoPayment').addEventListener('click', () => openPaymentModal());
+
+      // Botones de cierre de Modales
+      document.getElementById('btnCloseBrandModal').addEventListener('click', closeBrandModal);
+      document.getElementById('btnCancelBrandEdit').addEventListener('click', closeBrandModal);
+      document.getElementById('brandFormModal').addEventListener('click', (e) => {
+        if (e.target.id === 'brandFormModal') closeBrandModal();
+      });
+
+      document.getElementById('btnClosePaymentModal').addEventListener('click', closePaymentModal);
+      document.getElementById('btnCancelPaymentModal').addEventListener('click', closePaymentModal);
+      document.getElementById('paymentFormModal').addEventListener('click', (e) => {
+        if (e.target.id === 'paymentFormModal') closePaymentModal();
+      });
+
+      // Cerrar cualquier modal abierto con la tecla Escape
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeBrandModal();
+          closePaymentModal();
+          document.getElementById('receiptLightboxModal').classList.remove('open');
+        }
+      });
+
+      // Contraer barra lateral
+      document.getElementById('btnCollapseSidebar').addEventListener('click', () => {
+        document.getElementById('appShell').classList.toggle('sidebar-collapsed');
+      });
+
+      // Cambiar Tema Claro / Oscuro
+      document.getElementById('btnThemeToggle').addEventListener('click', () => {
+        const current = document.documentElement.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem(STORAGE_KEYS.THEME, next);
+        document.getElementById('themeIcon').className = next === 'dark' ? 'ph ph-sun-dim' : 'ph ph-moon-stars';
+      });
+
+      // Filtro de Mes
+      document.getElementById('monthFilterInput').addEventListener('change', (e) => {
+        if (e.target.value) {
+          appState.selectedMonth = e.target.value;
+          loadApplicationData();
+        }
+      });
+
+      // Edición Manual de Tasa de Cambio
+      const btnManualRate = document.getElementById('btnToggleManualRate');
+      const rateInput = document.getElementById('rateManualInput');
+      const rateDisplay = document.getElementById('rateDisplayValue');
+
+      btnManualRate.addEventListener('click', () => {
+        const isEditing = rateInput.style.display !== 'none';
+        if (!isEditing) {
+          rateInput.value = appState.exchangeRate.toFixed(2);
+          rateDisplay.style.display = 'none';
+          rateInput.style.display = 'inline-block';
+          rateInput.focus();
+        } else {
+          const val = parseFloat(rateInput.value);
+          if (val > 0) {
+            appState.exchangeRate = Number(val.toFixed(2));
+            appState.exchangeMode = 'manual';
+            localStorage.setItem(STORAGE_KEYS.RATE_VALUE, String(appState.exchangeRate));
+            localStorage.setItem(STORAGE_KEYS.RATE_MODE, 'manual');
+            showToast(`Tasa manual establecida: Bs. ${appState.exchangeRate.toFixed(2)}`, 'ph-pencil-simple');
+          }
+          rateInput.style.display = 'none';
+          rateDisplay.style.display = 'inline-block';
+          updateExchangeRateUI();
+          renderAllViews();
+        }
+      });
+
+      rateInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          btnManualRate.click();
+        }
+      });
+
+      document.getElementById('btnRefreshApiRate').addEventListener('click', () => {
+        fetchOfficialExchangeRate(true);
+      });
+
+      // Selector de Modo de Control de Entregables
+      document.getElementById('brandModeSelect').addEventListener('change', (e) => {
+        document.getElementById('quotaInputsContainer').style.display =
+          e.target.value === 'limite' ? 'grid' : 'none';
+      });
+
+      // Guardar Marca
+      document.getElementById('brandForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const editId = document.getElementById('brandIdInput').value;
+        const payload = {
+          id: editId ? Number(editId) : null,
+          name: document.getElementById('brandNameInput').value.trim(),
+          category: document.getElementById('brandCategoryInput').value.trim() || 'Marketing Digital',
+          start_date: document.getElementById('brandStartInput').value,
+          monthly_fee_usd: parseFloat(document.getElementById('brandFeeInput').value) || 0,
+          tracking_mode: document.getElementById('brandModeSelect').value,
+          flyers_quota: parseInt(document.getElementById('quotaFlyersInput').value, 10) || 0,
+          videos_quota: parseInt(document.getElementById('quotaVideosInput').value, 10) || 0,
+          stories_quota: parseInt(document.getElementById('quotaStoriesInput').value, 10) || 0,
+          month_year: appState.selectedMonth
+        };
+
+        if (appState.isBackendConnected) {
+          const res = await fetch('api.php?action=save_brand', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          const json = await res.json();
+          if (json.success) {
+            await loadApplicationData();
+          }
+        } else {
+          if (payload.id) {
+            const idx = appState.brands.findIndex(b => Number(b.id) === payload.id);
+            if (idx !== -1) {
+              appState.brands[idx] = {
+                ...appState.brands[idx],
+                name: payload.name,
+                category: payload.category,
+                start_date: payload.start_date,
+                monthly_fee_usd: payload.monthly_fee_usd,
+                tracking_mode: payload.tracking_mode,
+                deliverables: {
+                  ...appState.brands[idx].deliverables,
+                  flyers_quota: payload.flyers_quota,
+                  videos_quota: payload.videos_quota,
+                  stories_quota: payload.stories_quota
+                }
+              };
+            }
+          } else {
+            const newId = Date.now();
+            appState.brands.unshift({
+              id: newId,
+              name: payload.name,
+              category: payload.category,
+              start_date: payload.start_date,
+              monthly_fee_usd: payload.monthly_fee_usd,
+              tracking_mode: payload.tracking_mode,
+              deliverables: {
+                flyers_done: 0, flyers_quota: payload.flyers_quota,
+                videos_done: 0, videos_quota: payload.videos_quota,
+                stories_done: 0, stories_quota: payload.stories_quota
+              }
+            });
+          }
+          saveDemoStateToStorage();
+          renderAllViews();
+        }
+
+        document.getElementById('brandForm').reset();
+        document.getElementById('brandIdInput').value = '';
+        document.getElementById('brandStartInput').value = todayIsoDate;
+        closeBrandModal();
+        showToast('Marca guardada correctamente.');
+      });
+
+      // Delegación de eventos en tarjetas de marcas e historial
+      document.body.addEventListener('click', async (e) => {
+        const stepBtn = e.target.closest('[data-action="step-deliv"]');
+        if (stepBtn) {
+          const brandId = Number(stepBtn.dataset.brand);
+          const type = stepBtn.dataset.type;
+          const delta = Number(stepBtn.dataset.delta);
+          updateDeliverableCounter(brandId, type, delta);
+          return;
+        }
+
+        const editBtn = e.target.closest('[data-action="edit-brand"]');
+        if (editBtn) {
+          const brand = appState.brands.find(b => Number(b.id) === Number(editBtn.dataset.brand));
+          if (!brand) return;
+          openBrandModal(brand);
+          return;
+        }
+
+        const quickPayBtn = e.target.closest('[data-action="quick-pay-brand"]');
+        if (quickPayBtn) {
+          openPaymentModal(quickPayBtn.dataset.brand);
+          return;
+        }
+
+        const delBrandBtn = e.target.closest('[data-action="delete-brand"]');
+        if (delBrandBtn) {
+          const bid = Number(delBrandBtn.dataset.brand);
+          appState.brands = appState.brands.filter(b => Number(b.id) !== bid);
+          appState.payments = appState.payments.filter(p => Number(p.brand_id) !== bid);
+          if (appState.isBackendConnected) {
+            await fetch('api.php?action=delete_brand', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ brand_id: bid })
+            });
+          } else {
+            saveDemoStateToStorage();
+          }
+          renderAllViews();
+          showToast('Marca eliminada del sistema.', 'ph-trash');
+          return;
+        }
+
+        const viewCaptureBtn = e.target.closest('.btn-view-capture');
+        if (viewCaptureBtn) {
+          openReceiptLightbox(viewCaptureBtn.dataset.paymentId);
+          return;
+        }
+
+        const delPayBtn = e.target.closest('[data-action="delete-payment"]');
+        if (delPayBtn) {
+          const pid = Number(delPayBtn.dataset.paymentId);
+          appState.payments = appState.payments.filter(p => Number(p.id) !== pid);
+          if (appState.isBackendConnected) {
+            await fetch('api.php?action=delete_payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ payment_id: pid })
+            });
+          } else {
+            saveDemoStateToStorage();
+          }
+          renderAllViews();
+          showToast('Registro de pago eliminado.', 'ph-trash');
+        }
+      });
+
+      // Conversión en tiempo real en el formulario de pagos
+      ['payBrandSelect', 'payPeriodSelect', 'payAmountVesInput', 'payRateInput'].forEach(id => {
+        document.getElementById(id).addEventListener('input', (e) => {
+          if (id === 'payRateInput') e.target.dataset.touched = 'true';
+          updateRealtimePaymentConversion();
+        });
+      });
+
+      // Botón para autocompletar el 50% exacto de la quincena en Bolívares
+      document.getElementById('btnFillExactQuincena').addEventListener('click', () => {
+        const brandId = Number(document.getElementById('payBrandSelect').value || 0);
+        const brand = appState.brands.find(b => Number(b.id) === brandId);
+        if (!brand) return;
+        const rate = parseFloat(document.getElementById('payRateInput').value) || appState.exchangeRate;
+        const halfUsd = brand.monthly_fee_usd / 2;
+        document.getElementById('payAmountVesInput').value = (halfUsd * rate).toFixed(2);
+        updateRealtimePaymentConversion();
+      });
+
+      // Drag and Drop y vista previa de Capture
+      const dropzone = document.getElementById('captureDropzone');
+      const fileInput = document.getElementById('payReceiptFileInput');
+      const previewImg = document.getElementById('capturePreviewImg');
+
+      function handleCaptureFile(file) {
+        if (!file || !file.type.startsWith('image/')) {
+          showToast('Selecciona una imagen válida (JPG, PNG o WEBP).', 'ph-warning');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          appState.currentCaptureBase64 = ev.target.result;
+          previewImg.src = appState.currentCaptureBase64;
+          previewImg.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+      }
+
+      dropzone.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files?.[0]) handleCaptureFile(e.target.files[0]);
+      });
+
+      dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+      });
+      dropzone.addEventListener('dragleave', () => dropzone.classList.remove('dragover'));
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        if (e.dataTransfer.files?.[0]) {
+          fileInput.files = e.dataTransfer.files;
+          handleCaptureFile(e.dataTransfer.files[0]);
+        }
+      });
+
+      // Registrar Pago
+      document.getElementById('paymentForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const brandId = Number(document.getElementById('payBrandSelect').value);
+        const brand = appState.brands.find(b => Number(b.id) === brandId);
+        if (!brand) return;
+
+        const periodType = document.getElementById('payPeriodSelect').value;
+        const paymentDate = document.getElementById('payDateInput').value;
+        const amountVes = parseFloat(document.getElementById('payAmountVesInput').value) || 0;
+        const exchangeRate = parseFloat(document.getElementById('payRateInput').value) || appState.exchangeRate;
+        const referenceCode = document.getElementById('payRefInput').value.trim() || 'S/R';
+        const amountUsd = Number((amountVes / exchangeRate).toFixed(2));
+
+        const receiptToSave = appState.currentCaptureBase64 ||
+          createSampleReceiptDataUrl(brand.name, amountVes, amountUsd, referenceCode, paymentDate);
+
+        if (appState.isBackendConnected) {
+          const formData = new FormData();
+          formData.append('action', 'create_payment');
+          formData.append('brand_id', String(brandId));
+          formData.append('period_type', periodType);
+          formData.append('month_year', appState.selectedMonth);
+          formData.append('payment_date', paymentDate);
+          formData.append('amount_ves', String(amountVes));
+          formData.append('exchange_rate', String(exchangeRate));
+          formData.append('reference_code', referenceCode);
+          formData.append('receipt_base64', receiptToSave);
+          if (fileInput.files?.[0]) {
+            formData.append('receipt_file', fileInput.files[0]);
+          }
+
+          const res = await fetch('api.php?action=create_payment', {
+            method: 'POST',
+            body: formData
+          });
+          const json = await res.json();
+          if (json.success) {
+            await loadApplicationData();
+          }
+        } else {
+          appState.payments.unshift({
+            id: Date.now(),
+            brand_id: brandId,
+            brand_name: brand.name,
+            period_type: periodType,
+            month_year: appState.selectedMonth,
+            payment_date: paymentDate,
+            amount_ves: amountVes,
+            exchange_rate: exchangeRate,
+            amount_usd: amountUsd,
+            reference_code: referenceCode,
+            receipt_path: receiptToSave
+          });
+          saveDemoStateToStorage();
+          renderAllViews();
+        }
+
+        document.getElementById('payAmountVesInput').value = '';
+        document.getElementById('payRefInput').value = '';
+        fileInput.value = '';
+        appState.currentCaptureBase64 = null;
+        previewImg.style.display = 'none';
+        updateRealtimePaymentConversion();
+        closePaymentModal();
+        showToast(`Pago registrado: ${formatUsd(amountUsd)} (${brand.name})`, 'ph-check-circle');
+      });
+
+      // Filtros de Historial de Pagos
+      document.getElementById('historyFilterBrand').addEventListener('change', renderPaymentsHistoryTable);
+      document.getElementById('historyFilterPeriod').addEventListener('change', renderPaymentsHistoryTable);
+
+      // Cerrar Lightbox
+      document.getElementById('btnCloseLightbox').addEventListener('click', () => {
+        document.getElementById('receiptLightboxModal').classList.remove('open');
+      });
+      document.getElementById('receiptLightboxModal').addEventListener('click', (e) => {
+        if (e.target.id === 'receiptLightboxModal') {
+          e.target.classList.remove('open');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
