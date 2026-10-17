@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS `deliverables` (
   `brand_id` INT UNSIGNED NOT NULL,
   `month_year` CHAR(7) NOT NULL COMMENT 'Formato YYYY-MM, ej: 2025-05',
   `flyers_done` INT UNSIGNED NOT NULL DEFAULT 0,
-  `flyers_Quota` INT UNSIGNED NOT NULL DEFAULT 12,
+  `flyers_quota` INT UNSIGNED NOT NULL DEFAULT 12,
   `videos_done` INT UNSIGNED NOT NULL DEFAULT 0,
   `videos_quota` INT UNSIGNED NOT NULL DEFAULT 8,
   `stories_done` INT UNSIGNED NOT NULL DEFAULT 0,
@@ -90,19 +90,19 @@ CREATE TABLE IF NOT EXISTS `payments` (
 -- ----------------------------------------------------------------------------
 -- 5. DATOS SEMILLA INICIALES (Seed Data)
 -- ----------------------------------------------------------------------------
-INSERT INTO `brands` (`id`, `name`, `category`, `start_date`, `monthly_fee_usd`, `tracking_mode`, `status`) VALUES
+INSERT IGNORE INTO `brands` (`id`, `name`, `category`, `start_date`, `monthly_fee_usd`, `tracking_mode`, `status`) VALUES
 (1, 'Café Ávila Gourmet', 'Gastronomía & Specialty Coffee', '2025-01-10', 480.00, 'limite', 'activa'),
 (2, 'Clínica Dental Sonrisa', 'Salud & Odontología Estética', '2025-02-01', 650.00, 'limite', 'activa'),
 (3, 'Inmobiliaria Costa Azul', 'Bienes Raíces Luxury', '2025-01-15', 800.00, 'libre', 'activa'),
 (4, 'TechNova Store VE', 'E-Commerce & Electrónica', '2025-03-01', 420.00, 'limite', 'activa');
 
-INSERT INTO `deliverables` (`brand_id`, `month_year`, `flyers_done`, `flyers_Quota`, `videos_done`, `videos_quota`, `stories_done`, `stories_quota`) VALUES
+INSERT IGNORE INTO `deliverables` (`brand_id`, `month_year`, `flyers_done`, `flyers_quota`, `videos_done`, `videos_quota`, `stories_done`, `stories_quota`) VALUES
 (1, DATE_FORMAT(NOW(), '%Y-%m'), 9, 12, 6, 8, 14, 20),
 (2, DATE_FORMAT(NOW(), '%Y-%m'), 12, 12, 5, 6, 15, 15),
 (3, DATE_FORMAT(NOW(), '%Y-%m'), 16, 0, 11, 0, 28, 0),
 (4, DATE_FORMAT(NOW(), '%Y-%m'), 5, 10, 2, 6, 8, 12);
 
-INSERT INTO `payments` (`brand_id`, `period_type`, `month_year`, `payment_date`, `amount_ves`, `exchange_rate`, `amount_usd`, `reference_code`, `notes`) VALUES
+INSERT IGNORE INTO `payments` (`brand_id`, `period_type`, `month_year`, `payment_date`, `amount_ves`, `exchange_rate`, `amount_usd`, `reference_code`, `notes`) VALUES
 (1, 'Q1', DATE_FORMAT(NOW(), '%Y-%m'), DATE_FORMAT(NOW(), '%Y-%m-03'), 10992.00, 45.8000, 240.00, 'PM-884120', 'Pago puntual primera quincena Pago Móvil Banesco'),
 (2, 'Q1', DATE_FORMAT(NOW(), '%Y-%m'), DATE_FORMAT(NOW(), '%Y-%m-04'), 14885.00, 45.8000, 325.00, 'TRF-992011', 'Transferencia Mercantil Q1 completa'),
 (2, 'Q2', DATE_FORMAT(NOW(), '%Y-%m'), DATE_FORMAT(NOW(), '%Y-%m-17'), 14885.00, 45.8000, 325.00, 'TRF-998450', 'Segunda quincena cancelada en fecha'),

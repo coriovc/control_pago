@@ -1106,21 +1106,48 @@
       text-align: center;
       background: var(--glass-surface-subtle);
       cursor: pointer;
+      transition: var(--transition-smooth);
+      position: relative;
+    }
+
+    .capture-dropzone:hover,
+    .capture-dropzone.dragover {
+      border-color: var(--accent-secondary);
+      background: rgba(37, 99, 235, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .capture-preview-img {
+      max-width: 100%;
+      max-height: 200px;
+      object-fit: contain;
+      border-radius: var(--radius-md);
+      margin-top: 12px;
+      border: 1px solid var(--glass-border);
+      background: rgba(0, 0, 0, 0.16);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+    }
+
+    body.modal-open {
+      overflow: hidden;
+    }
+
     /* Lightbox Modal & Modales de Formularios Dinámicos */
     .modal-backdrop {
       position: fixed;
       inset: 0;
       z-index: 100;
-      background: rgba(7, 11, 20, 0.62);
+      background: rgba(7, 11, 20, 0.65);
       backdrop-filter: blur(16px) saturate(160%);
       -webkit-backdrop-filter: blur(16px) saturate(160%);
-      display: grid;
-      place-items: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       padding: 20px;
       opacity: 0;
       visibility: hidden;
       pointer-events: none;
-      transition: opacity 0.34s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.34s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       overflow-y: auto;
     }
 
@@ -1139,8 +1166,8 @@
       flex-direction: column;
       gap: 18px;
       transform: translateY(24px) scale(0.95);
-      transition: transform 0.42s cubic-bezier(0.34, 1.56, 0.64, 1);
-      max-height: 92vh;
+      transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+      max-height: 90vh;
       overflow-y: auto;
     }
 
@@ -1739,7 +1766,14 @@
             <i class="ph-duotone ph-cloud-arrow-up" style="font-size:2.1rem;color:var(--accent-primary);"></i>
             <div style="font-weight:700;font-size:0.9rem;">Arrastra el comprobante aquí o haz clic para seleccionar imagen</div>
             <small style="color:var(--text-muted);">Vista previa instantánea antes de guardar</small>
-            <img id="capturePreviewImg" class="capture-preview-img" style="display:none;" alt="Vista previa del capture" />
+            <div id="capturePreviewContainer" style="display:none;margin-top:12px;text-align:center;">
+              <img id="capturePreviewImg" class="capture-preview-img" alt="Vista previa del capture" />
+              <div style="margin-top:8px;">
+                <button type="button" class="btn-secondary" id="btnRemoveCapture" style="padding:5px 12px;font-size:0.76rem;">
+                  <i class="ph ph-trash"></i> Quitar comprobante
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1760,7 +1794,7 @@
     <div class="modal-glass-box liquid-glass">
       <div class="section-header">
         <h3 id="lightboxTitle"><i class="ph-duotone ph-image"></i> Comprobante de Pago</h3>
-        <button class="icon-action-btn" id="btnCloseLightbox" title="Cerrar vista previa">
+        <button type="button" class="icon-action-btn" id="btnCloseLightbox" title="Cerrar vista previa">
           <i class="ph ph-x"></i>
         </button>
       </div>
@@ -1825,6 +1859,9 @@
 
     const appState = {
       isBackendConnected: false,
+      dbEngine: 'mysql',
+      dbSource: '',
+      apiUrl: 'api.php',
       selectedMonth: currentYearMonth,
       exchangeRate: parseFloat(localStorage.getItem(STORAGE_KEYS.RATE_VALUE)) || 45.80,
       exchangeMode: localStorage.getItem(STORAGE_KEYS.RATE_MODE) || 'auto',
@@ -1996,6 +2033,18 @@
           updateExchangeRateUI();
           renderAllViews();
           showToast(`Tasa BCV sincronizada: Bs. ${appState.exchangeRate.toFixed(2)} / USD`, 'ph-currency-dollar');
+
+          // Persistir tasa en backend si está conectado
+          if (appState.isBackendConnected && appState.apiUrl) {
+            fetch(`${appState.apiUrl}?action=save_rate`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                exchange_rate_ves: appState.exchangeRate,
+                exchange_rate_mode: 'auto'
+              })
+            }).catch(() => {});
+          }
           return;
         }
       } catch (err) {
@@ -2028,11 +2077,11 @@
         p => Number(p.brand_id) === Number(brand.id) && p.month_year === appState.selectedMonth
       );
 
-      const q1Paid = brandPayments
+      const q1PaidDirect = brandPayments
         .filter(p => p.period_type === 'Q1')
         .reduce((acc, p) => acc + Number(p.amount_usd), 0);
 
-      const q2Paid = brandPayments
+      const q2PaidDirect = brandPayments
         .filter(p => p.period_type === 'Q2')
         .reduce((acc, p) => acc + Number(p.amount_usd), 0);
 
@@ -2040,7 +2089,15 @@
         .filter(p => p.period_type === 'ABONO')
         .reduce((acc, p) => acc + Number(p.amount_usd), 0);
 
-      const totalPaidUsd = Number((q1Paid + q2Paid + abonoPaid).toFixed(2));
+      // Los abonos parciales cubren primero lo que reste de Q1, y el excedente pasa a Q2
+      const q1Missing = Math.max(0, halfQuota - q1PaidDirect);
+      const abonoToQ1 = Math.min(q1Missing, abonoPaid);
+      const abonoToQ2 = Math.max(0, abonoPaid - abonoToQ1);
+
+      const q1Paid = Number((q1PaidDirect + abonoToQ1).toFixed(2));
+      const q2Paid = Number((q2PaidDirect + abonoToQ2).toFixed(2));
+
+      const totalPaidUsd = Number((q1PaidDirect + q2PaidDirect + abonoPaid).toFixed(2));
       const totalPaidVes = brandPayments.reduce((acc, p) => acc + Number(p.amount_ves), 0);
       const pendingMonthUsd = Math.max(0, Number((brand.monthly_fee_usd - totalPaidUsd).toFixed(2)));
 
@@ -2104,29 +2161,50 @@
     }
 
     async function loadApplicationData() {
-      try {
-        const res = await fetch(`api.php?action=bootstrap&month=${encodeURIComponent(appState.selectedMonth)}`, {
-          headers: { 'Accept': 'application/json' }
-        });
-        if (!res.ok) throw new Error('Backend no disponible');
-        const json = await res.json();
-        if (!json.success) throw new Error(json.message || 'Respuesta inválida');
+      let connected = false;
+      const endpointsToTry = ['api.php', 'endpoint_backend_rest_con_pdo.php'];
 
-        appState.isBackendConnected = true;
-        appState.brands = json.data.brands || [];
-        appState.payments = json.data.payments || [];
+      for (const ep of endpointsToTry) {
+        try {
+          const res = await fetch(`${ep}?action=bootstrap&month=${encodeURIComponent(appState.selectedMonth)}`, {
+            headers: { 'Accept': 'application/json' }
+          });
+          if (res.ok) {
+            const json = await res.json();
+            if (json && json.success) {
+              appState.apiUrl = ep;
+              appState.isBackendConnected = true;
+              appState.dbEngine = json.db_engine || json.data?.db_engine || 'mysql';
+              appState.dbSource = json.db_source || json.data?.db_source || 'MySQL';
+              appState.brands = json.data?.brands || [];
+              appState.payments = json.data?.payments || [];
 
-        if (json.data.settings?.exchange_rate_ves && appState.exchangeMode !== 'manual') {
-          appState.exchangeRate = parseFloat(json.data.settings.exchange_rate_ves) || appState.exchangeRate;
+              if (json.data?.settings?.exchange_rate_ves && appState.exchangeMode !== 'manual') {
+                appState.exchangeRate = parseFloat(json.data.settings.exchange_rate_ves) || appState.exchangeRate;
+              }
+              connected = true;
+              break;
+            }
+          }
+        } catch (e) {
+          // Intentar el siguiente endpoint
         }
-      } catch (e) {
-        // Activar Modo Demo en localStorage si no hay servidor PHP activo
+      }
+
+      if (!connected) {
         appState.isBackendConnected = false;
+        appState.apiUrl = null;
         const rawSaved = localStorage.getItem(STORAGE_KEYS.DEMO_STATE);
         if (rawSaved) {
-          const parsed = JSON.parse(rawSaved);
-          appState.brands = parsed.brands || [];
-          appState.payments = parsed.payments || [];
+          try {
+            const parsed = JSON.parse(rawSaved);
+            appState.brands = parsed.brands || [];
+            appState.payments = parsed.payments || [];
+          } catch (e) {
+            const seed = getDefaultDemoData(appState.selectedMonth);
+            appState.brands = seed.brands;
+            appState.payments = seed.payments;
+          }
         } else {
           const seed = getDefaultDemoData(appState.selectedMonth);
           appState.brands = seed.brands;
@@ -2153,12 +2231,13 @@
 
       if (appState.isBackendConnected) {
         dot.classList.remove('demo');
-        label.textContent = 'Servidor MySQL Conectado';
-        sub.textContent = 'PDO API activa (api.php)';
+        const engineLabel = (appState.dbEngine === 'sqlite') ? 'SQLite Local' : 'MySQL PDO';
+        label.textContent = `Base de Datos Conectada (${engineLabel})`;
+        sub.textContent = `Guardando en: ${appState.dbSource || appState.apiUrl}`;
       } else {
         dot.classList.add('demo');
-        label.textContent = 'Modo Demo Interactivo';
-        sub.textContent = 'Persistencia local activa';
+        label.textContent = 'Modo Local (Sin Servidor PHP)';
+        sub.textContent = 'Ejecuta iniciar_servidor.bat o XAMPP para conectar la BD';
       }
     }
 
@@ -2407,11 +2486,14 @@
       const field = propMap[type];
       if (!field) return;
 
-      brand.deliverables[field] = Math.max(0, Number(brand.deliverables[field] || 0) + delta);
+      const prevVal = Number(brand.deliverables[field] || 0);
+      const newVal = Math.max(0, prevVal + delta);
+      brand.deliverables[field] = newVal;
+      renderAllViews();
 
-      if (appState.isBackendConnected) {
+      if (appState.isBackendConnected && appState.apiUrl) {
         try {
-          await fetch('api.php?action=update_deliverable', {
+          const res = await fetch(`${appState.apiUrl}?action=update_deliverable`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2421,14 +2503,21 @@
               delta
             })
           });
+          const json = await res.json();
+          if (!json.success) {
+            // Revertir optimismo
+            brand.deliverables[field] = prevVal;
+            renderAllViews();
+            showToast(json.message || 'Error al actualizar entregable.', 'ph-warning');
+          }
         } catch (err) {
-          // Respaldo local automático
+          brand.deliverables[field] = prevVal;
+          renderAllViews();
+          showToast('Error de conexión con la base de datos.', 'ph-warning');
         }
       } else {
         saveDemoStateToStorage();
       }
-
-      renderAllViews();
     }
 
     function populateBrandSelects() {
@@ -2439,6 +2528,14 @@
 
       paySelect.innerHTML = '';
       filterSelect.innerHTML = '<option value="ALL">Todas las marcas</option>';
+
+      if (appState.brands.length === 0) {
+        const noBrandOpt = document.createElement('option');
+        noBrandOpt.value = '';
+        noBrandOpt.textContent = '— No hay marcas registradas —';
+        paySelect.appendChild(noBrandOpt);
+        return;
+      }
 
       appState.brands.forEach(b => {
         const opt1 = document.createElement('option');
@@ -2459,16 +2556,23 @@
     }
 
     function updateRealtimePaymentConversion() {
-      const brandId = Number(document.getElementById('payBrandSelect').value || 0);
-      const period = document.getElementById('payPeriodSelect').value;
-      const amountVes = parseFloat(document.getElementById('payAmountVesInput').value) || 0;
-      const rate = parseFloat(document.getElementById('payRateInput').value) || appState.exchangeRate;
+      const brandSelect = document.getElementById('payBrandSelect');
+      const brandId = Number(brandSelect ? brandSelect.value : 0);
+      const period = document.getElementById('payPeriodSelect')?.value || 'Q1';
+      const amountVes = parseFloat(document.getElementById('payAmountVesInput')?.value) || 0;
+      const rateInput = document.getElementById('payRateInput');
+      const rate = parseFloat(rateInput?.value) || appState.exchangeRate;
 
       const eqUsd = rate > 0 ? Number((amountVes / rate).toFixed(2)) : 0;
-      document.getElementById('calcEquivalentUsd').textContent = `${formatUsd(eqUsd)} USD`;
+      const calcEqEl = document.getElementById('calcEquivalentUsd');
+      if (calcEqEl) calcEqEl.textContent = `${formatUsd(eqUsd)} USD`;
 
       const brand = appState.brands.find(b => Number(b.id) === brandId);
-      if (!brand) return;
+      if (!brand) {
+        document.getElementById('calcExpectedQuincenaUsd').textContent = '$0.00 USD';
+        document.getElementById('calcRemainingQuincenaUsd').textContent = '$0.00 USD';
+        return;
+      }
 
       const status = evaluateBrandBiweeklyStatus(brand);
       let currentRemaining = status.pendingMonthUsd;
@@ -2555,7 +2659,7 @@
         document.getElementById('brandCategoryInput').value = brandToEdit.category || '';
         document.getElementById('brandStartInput').value = brandToEdit.start_date;
         document.getElementById('brandFeeInput').value = brandToEdit.monthly_fee_usd;
-        document.getElementById('brandModeSelect').value = brandToEdit.tracking_mode;
+        document.getElementById('brandModeSelect').value = brandToEdit.tracking_mode || 'limite';
         document.getElementById('quotaFlyersInput').value = brandToEdit.deliverables?.flyers_quota ?? 12;
         document.getElementById('quotaVideosInput').value = brandToEdit.deliverables?.videos_quota ?? 8;
         document.getElementById('quotaStoriesInput').value = brandToEdit.deliverables?.stories_quota ?? 15;
@@ -2570,28 +2674,53 @@
       }
 
       modal.classList.add('open');
+      document.body.classList.add('modal-open');
       setTimeout(() => document.getElementById('brandNameInput').focus(), 120);
     }
 
     function closeBrandModal() {
       document.getElementById('brandFormModal').classList.remove('open');
+      document.body.classList.remove('modal-open');
     }
 
     function openPaymentModal(preselectedBrandId = null) {
+      if (appState.brands.length === 0) {
+        showToast('Debes registrar al menos una marca antes de cargar un pago.', 'ph-warning');
+        openBrandModal();
+        return;
+      }
+
       populateBrandSelects();
       const modal = document.getElementById('paymentFormModal');
+      const form = document.getElementById('paymentForm');
+      form.reset();
+
+      // Limpiar preview y dropzone
+      appState.currentCaptureBase64 = null;
+      const previewImg = document.getElementById('capturePreviewImg');
+      const previewContainer = document.getElementById('capturePreviewContainer');
+      if (previewImg) previewImg.src = '';
+      if (previewContainer) previewContainer.style.display = 'none';
+      const fileInput = document.getElementById('payReceiptFileInput');
+      if (fileInput) fileInput.value = '';
+
       if (preselectedBrandId) {
         document.getElementById('payBrandSelect').value = String(preselectedBrandId);
       }
       document.getElementById('payDateInput').value = todayIsoDate;
-      document.getElementById('payRateInput').value = appState.exchangeRate.toFixed(2);
+      const payRateInput = document.getElementById('payRateInput');
+      payRateInput.value = appState.exchangeRate.toFixed(2);
+      delete payRateInput.dataset.touched;
+
       updateRealtimePaymentConversion();
       modal.classList.add('open');
+      document.body.classList.add('modal-open');
       setTimeout(() => document.getElementById('payAmountVesInput').focus(), 120);
     }
 
     function closePaymentModal() {
       document.getElementById('paymentFormModal').classList.remove('open');
+      document.body.classList.remove('modal-open');
     }
 
     function openReceiptLightbox(paymentId) {
@@ -2603,6 +2732,12 @@
         `Periodo: ${payment.period_type} • Fecha: ${payment.payment_date} • Monto: ${formatVes(payment.amount_ves)} (${formatUsd(payment.amount_usd)} a tasa Bs. ${Number(payment.exchange_rate).toFixed(2)})`;
       document.getElementById('lightboxImage').src = payment.receipt_path;
       document.getElementById('receiptLightboxModal').classList.add('open');
+      document.body.classList.add('modal-open');
+    }
+
+    function closeReceiptLightbox() {
+      document.getElementById('receiptLightboxModal').classList.remove('open');
+      document.body.classList.remove('modal-open');
     }
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -2626,7 +2761,7 @@
         btn.addEventListener('click', () => switchView(btn.dataset.target));
       });
 
-      // Botones de apertura de Modales (Panel Principal, Sección Marcas y Sección Pagos)
+      // Botones de apertura de Modales
       document.getElementById('btnDashboardAddBrand').addEventListener('click', () => openBrandModal());
       document.getElementById('btnOpenBrandModalSection').addEventListener('click', () => openBrandModal());
 
@@ -2647,12 +2782,18 @@
         if (e.target.id === 'paymentFormModal') closePaymentModal();
       });
 
+      // Cerrar Lightbox
+      document.getElementById('btnCloseLightbox').addEventListener('click', closeReceiptLightbox);
+      document.getElementById('receiptLightboxModal').addEventListener('click', (e) => {
+        if (e.target.id === 'receiptLightboxModal') closeReceiptLightbox();
+      });
+
       // Cerrar cualquier modal abierto con la tecla Escape
       window.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
           closeBrandModal();
           closePaymentModal();
-          document.getElementById('receiptLightboxModal').classList.remove('open');
+          closeReceiptLightbox();
         }
       });
 
@@ -2698,6 +2839,17 @@
             localStorage.setItem(STORAGE_KEYS.RATE_VALUE, String(appState.exchangeRate));
             localStorage.setItem(STORAGE_KEYS.RATE_MODE, 'manual');
             showToast(`Tasa manual establecida: Bs. ${appState.exchangeRate.toFixed(2)}`, 'ph-pencil-simple');
+
+            if (appState.isBackendConnected && appState.apiUrl) {
+              fetch(`${appState.apiUrl}?action=save_rate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  exchange_rate_ves: appState.exchangeRate,
+                  exchange_rate_mode: 'manual'
+                })
+              }).catch(() => {});
+            }
           }
           rateInput.style.display = 'none';
           rateDisplay.style.display = 'inline-block';
@@ -2723,9 +2875,14 @@
           e.target.value === 'limite' ? 'grid' : 'none';
       });
 
-      // Guardar Marca
+      // Guardar Marca (Submit)
       document.getElementById('brandForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalBtnHtml = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Guardando...';
+
         const editId = document.getElementById('brandIdInput').value;
         const payload = {
           id: editId ? Number(editId) : null,
@@ -2740,60 +2897,77 @@
           month_year: appState.selectedMonth
         };
 
-        if (appState.isBackendConnected) {
-          const res = await fetch('api.php?action=save_brand', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          const json = await res.json();
-          if (json.success) {
+        if (payload.name === '' || payload.monthly_fee_usd <= 0) {
+          showToast('Ingresa un nombre y una mensualidad mayor a $0.', 'ph-warning');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnHtml;
+          return;
+        }
+
+        try {
+          if (appState.isBackendConnected && appState.apiUrl) {
+            const res = await fetch(`${appState.apiUrl}?action=save_brand`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+            const json = await res.json();
+            if (!json.success) {
+              throw new Error(json.message || 'Error al guardar en la base de datos.');
+            }
             await loadApplicationData();
-          }
-        } else {
-          if (payload.id) {
-            const idx = appState.brands.findIndex(b => Number(b.id) === payload.id);
-            if (idx !== -1) {
-              appState.brands[idx] = {
-                ...appState.brands[idx],
+          } else {
+            // Guardado en modo local
+            if (payload.id) {
+              const idx = appState.brands.findIndex(b => Number(b.id) === payload.id);
+              if (idx !== -1) {
+                appState.brands[idx] = {
+                  ...appState.brands[idx],
+                  name: payload.name,
+                  category: payload.category,
+                  start_date: payload.start_date,
+                  monthly_fee_usd: payload.monthly_fee_usd,
+                  tracking_mode: payload.tracking_mode,
+                  deliverables: {
+                    ...appState.brands[idx].deliverables,
+                    flyers_quota: payload.flyers_quota,
+                    videos_quota: payload.videos_quota,
+                    stories_quota: payload.stories_quota
+                  }
+                };
+              }
+            } else {
+              const newId = Date.now();
+              appState.brands.unshift({
+                id: newId,
                 name: payload.name,
                 category: payload.category,
                 start_date: payload.start_date,
                 monthly_fee_usd: payload.monthly_fee_usd,
                 tracking_mode: payload.tracking_mode,
                 deliverables: {
-                  ...appState.brands[idx].deliverables,
-                  flyers_quota: payload.flyers_quota,
-                  videos_quota: payload.videos_quota,
-                  stories_quota: payload.stories_quota
+                  flyers_done: 0, flyers_quota: payload.flyers_quota,
+                  videos_done: 0, videos_quota: payload.videos_quota,
+                  stories_done: 0, stories_quota: payload.stories_quota
                 }
-              };
+              });
             }
-          } else {
-            const newId = Date.now();
-            appState.brands.unshift({
-              id: newId,
-              name: payload.name,
-              category: payload.category,
-              start_date: payload.start_date,
-              monthly_fee_usd: payload.monthly_fee_usd,
-              tracking_mode: payload.tracking_mode,
-              deliverables: {
-                flyers_done: 0, flyers_quota: payload.flyers_quota,
-                videos_done: 0, videos_quota: payload.videos_quota,
-                stories_done: 0, stories_quota: payload.stories_quota
-              }
-            });
+            saveDemoStateToStorage();
+            renderAllViews();
           }
-          saveDemoStateToStorage();
-          renderAllViews();
-        }
 
-        document.getElementById('brandForm').reset();
-        document.getElementById('brandIdInput').value = '';
-        document.getElementById('brandStartInput').value = todayIsoDate;
-        closeBrandModal();
-        showToast('Marca guardada correctamente.');
+          document.getElementById('brandForm').reset();
+          document.getElementById('brandIdInput').value = '';
+          document.getElementById('brandStartInput').value = todayIsoDate;
+          closeBrandModal();
+          showToast(payload.id ? 'Marca actualizada correctamente.' : 'Marca guardada correctamente.');
+
+        } catch (err) {
+          showToast(err.message || 'Error al guardar la marca.', 'ph-warning');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnHtml;
+        }
       });
 
       // Delegación de eventos en tarjetas de marcas e historial
@@ -2824,19 +2998,32 @@
         const delBrandBtn = e.target.closest('[data-action="delete-brand"]');
         if (delBrandBtn) {
           const bid = Number(delBrandBtn.dataset.brand);
-          appState.brands = appState.brands.filter(b => Number(b.id) !== bid);
-          appState.payments = appState.payments.filter(p => Number(p.brand_id) !== bid);
-          if (appState.isBackendConnected) {
-            await fetch('api.php?action=delete_brand', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ brand_id: bid })
-            });
-          } else {
-            saveDemoStateToStorage();
+          const brand = appState.brands.find(b => Number(b.id) === bid);
+          const brandName = brand ? brand.name : 'esta marca';
+          if (!confirm(`¿Estás seguro de que deseas eliminar "${brandName}" y todos sus pagos y entregables registrados?`)) {
+            return;
           }
-          renderAllViews();
-          showToast('Marca eliminada del sistema.', 'ph-trash');
+
+          try {
+            if (appState.isBackendConnected && appState.apiUrl) {
+              const res = await fetch(`${appState.apiUrl}?action=delete_brand`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ brand_id: bid })
+              });
+              const json = await res.json();
+              if (!json.success) throw new Error(json.message);
+              await loadApplicationData();
+            } else {
+              appState.brands = appState.brands.filter(b => Number(b.id) !== bid);
+              appState.payments = appState.payments.filter(p => Number(p.brand_id) !== bid);
+              saveDemoStateToStorage();
+              renderAllViews();
+            }
+            showToast('Marca eliminada del sistema.', 'ph-trash');
+          } catch (err) {
+            showToast(err.message || 'Error al eliminar marca.', 'ph-warning');
+          }
           return;
         }
 
@@ -2849,27 +3036,44 @@
         const delPayBtn = e.target.closest('[data-action="delete-payment"]');
         if (delPayBtn) {
           const pid = Number(delPayBtn.dataset.paymentId);
-          appState.payments = appState.payments.filter(p => Number(p.id) !== pid);
-          if (appState.isBackendConnected) {
-            await fetch('api.php?action=delete_payment', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ payment_id: pid })
-            });
-          } else {
-            saveDemoStateToStorage();
+          if (!confirm('¿Estás seguro de que deseas eliminar este registro de pago?')) {
+            return;
           }
-          renderAllViews();
-          showToast('Registro de pago eliminado.', 'ph-trash');
+
+          try {
+            if (appState.isBackendConnected && appState.apiUrl) {
+              const res = await fetch(`${appState.apiUrl}?action=delete_payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ payment_id: pid })
+              });
+              const json = await res.json();
+              if (!json.success) throw new Error(json.message);
+              await loadApplicationData();
+            } else {
+              appState.payments = appState.payments.filter(p => Number(p.id) !== pid);
+              saveDemoStateToStorage();
+              renderAllViews();
+            }
+            showToast('Registro de pago eliminado.', 'ph-trash');
+          } catch (err) {
+            showToast(err.message || 'Error al eliminar pago.', 'ph-warning');
+          }
         }
       });
 
       // Conversión en tiempo real en el formulario de pagos
       ['payBrandSelect', 'payPeriodSelect', 'payAmountVesInput', 'payRateInput'].forEach(id => {
-        document.getElementById(id).addEventListener('input', (e) => {
-          if (id === 'payRateInput') e.target.dataset.touched = 'true';
-          updateRealtimePaymentConversion();
-        });
+        const el = document.getElementById(id);
+        if (el) {
+          el.addEventListener('input', (e) => {
+            if (id === 'payRateInput') e.target.dataset.touched = 'true';
+            updateRealtimePaymentConversion();
+          });
+          el.addEventListener('change', () => {
+            updateRealtimePaymentConversion();
+          });
+        }
       });
 
       // Botón para autocompletar el 50% exacto de la quincena en Bolívares
@@ -2887,6 +3091,8 @@
       const dropzone = document.getElementById('captureDropzone');
       const fileInput = document.getElementById('payReceiptFileInput');
       const previewImg = document.getElementById('capturePreviewImg');
+      const previewContainer = document.getElementById('capturePreviewContainer');
+      const btnRemoveCapture = document.getElementById('btnRemoveCapture');
 
       function handleCaptureFile(file) {
         if (!file || !file.type.startsWith('image/')) {
@@ -2896,16 +3102,27 @@
         const reader = new FileReader();
         reader.onload = (ev) => {
           appState.currentCaptureBase64 = ev.target.result;
-          previewImg.src = appState.currentCaptureBase64;
-          previewImg.style.display = 'block';
+          if (previewImg) previewImg.src = appState.currentCaptureBase64;
+          if (previewContainer) previewContainer.style.display = 'block';
         };
         reader.readAsDataURL(file);
       }
 
       dropzone.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('click', (e) => e.stopPropagation());
       fileInput.addEventListener('change', (e) => {
         if (e.target.files?.[0]) handleCaptureFile(e.target.files[0]);
       });
+
+      if (btnRemoveCapture) {
+        btnRemoveCapture.addEventListener('click', (e) => {
+          e.stopPropagation();
+          fileInput.value = '';
+          appState.currentCaptureBase64 = null;
+          if (previewImg) previewImg.src = '';
+          if (previewContainer) previewContainer.style.display = 'none';
+        });
+      }
 
       dropzone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -2921,87 +3138,101 @@
         }
       });
 
-      // Registrar Pago
+      // Registrar Pago (Submit)
       document.getElementById('paymentForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalBtnHtml = submitBtn.innerHTML;
+
         const brandId = Number(document.getElementById('payBrandSelect').value);
         const brand = appState.brands.find(b => Number(b.id) === brandId);
-        if (!brand) return;
+        if (!brand) {
+          showToast('Selecciona una marca válida.', 'ph-warning');
+          return;
+        }
 
         const periodType = document.getElementById('payPeriodSelect').value;
         const paymentDate = document.getElementById('payDateInput').value;
         const amountVes = parseFloat(document.getElementById('payAmountVesInput').value) || 0;
         const exchangeRate = parseFloat(document.getElementById('payRateInput').value) || appState.exchangeRate;
         const referenceCode = document.getElementById('payRefInput').value.trim() || 'S/R';
-        const amountUsd = Number((amountVes / exchangeRate).toFixed(2));
 
+        if (amountVes <= 0 || exchangeRate <= 0) {
+          showToast('Ingresa un monto en Bolívares y una tasa válidos.', 'ph-warning');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="ph ph-spinner ph-spin"></i> Registrando pago...';
+
+        const amountUsd = Number((amountVes / exchangeRate).toFixed(2));
         const receiptToSave = appState.currentCaptureBase64 ||
           createSampleReceiptDataUrl(brand.name, amountVes, amountUsd, referenceCode, paymentDate);
 
-        if (appState.isBackendConnected) {
-          const formData = new FormData();
-          formData.append('action', 'create_payment');
-          formData.append('brand_id', String(brandId));
-          formData.append('period_type', periodType);
-          formData.append('month_year', appState.selectedMonth);
-          formData.append('payment_date', paymentDate);
-          formData.append('amount_ves', String(amountVes));
-          formData.append('exchange_rate', String(exchangeRate));
-          formData.append('reference_code', referenceCode);
-          formData.append('receipt_base64', receiptToSave);
-          if (fileInput.files?.[0]) {
-            formData.append('receipt_file', fileInput.files[0]);
-          }
+        try {
+          if (appState.isBackendConnected && appState.apiUrl) {
+            const formData = new FormData();
+            formData.append('action', 'create_payment');
+            formData.append('brand_id', String(brandId));
+            formData.append('period_type', periodType);
+            formData.append('month_year', appState.selectedMonth);
+            formData.append('payment_date', paymentDate);
+            formData.append('amount_ves', String(amountVes));
+            formData.append('exchange_rate', String(exchangeRate));
+            formData.append('reference_code', referenceCode);
+            formData.append('receipt_base64', receiptToSave);
+            if (fileInput.files?.[0]) {
+              formData.append('receipt_file', fileInput.files[0]);
+            }
 
-          const res = await fetch('api.php?action=create_payment', {
-            method: 'POST',
-            body: formData
-          });
-          const json = await res.json();
-          if (json.success) {
+            const res = await fetch(`${appState.apiUrl}?action=create_payment`, {
+              method: 'POST',
+              body: formData
+            });
+            const json = await res.json();
+            if (!json.success) {
+              throw new Error(json.message || 'Error al registrar el pago en la base de datos.');
+            }
             await loadApplicationData();
+          } else {
+            appState.payments.unshift({
+              id: Date.now(),
+              brand_id: brandId,
+              brand_name: brand.name,
+              period_type: periodType,
+              month_year: appState.selectedMonth,
+              payment_date: paymentDate,
+              amount_ves: amountVes,
+              exchange_rate: exchangeRate,
+              amount_usd: amountUsd,
+              reference_code: referenceCode,
+              receipt_path: receiptToSave
+            });
+            saveDemoStateToStorage();
+            renderAllViews();
           }
-        } else {
-          appState.payments.unshift({
-            id: Date.now(),
-            brand_id: brandId,
-            brand_name: brand.name,
-            period_type: periodType,
-            month_year: appState.selectedMonth,
-            payment_date: paymentDate,
-            amount_ves: amountVes,
-            exchange_rate: exchangeRate,
-            amount_usd: amountUsd,
-            reference_code: referenceCode,
-            receipt_path: receiptToSave
-          });
-          saveDemoStateToStorage();
-          renderAllViews();
-        }
 
-        document.getElementById('payAmountVesInput').value = '';
-        document.getElementById('payRefInput').value = '';
-        fileInput.value = '';
-        appState.currentCaptureBase64 = null;
-        previewImg.style.display = 'none';
-        updateRealtimePaymentConversion();
-        closePaymentModal();
-        showToast(`Pago registrado: ${formatUsd(amountUsd)} (${brand.name})`, 'ph-check-circle');
+          document.getElementById('paymentForm').reset();
+          fileInput.value = '';
+          appState.currentCaptureBase64 = null;
+          if (previewImg) previewImg.src = '';
+          if (previewContainer) previewContainer.style.display = 'none';
+
+          updateRealtimePaymentConversion();
+          closePaymentModal();
+          showToast(`Pago registrado: ${formatUsd(amountUsd)} (${brand.name})`, 'ph-check-circle');
+
+        } catch (err) {
+          showToast(err.message || 'Error al procesar el pago.', 'ph-warning');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalBtnHtml;
+        }
       });
 
       // Filtros de Historial de Pagos
       document.getElementById('historyFilterBrand').addEventListener('change', renderPaymentsHistoryTable);
       document.getElementById('historyFilterPeriod').addEventListener('change', renderPaymentsHistoryTable);
-
-      // Cerrar Lightbox
-      document.getElementById('btnCloseLightbox').addEventListener('click', () => {
-        document.getElementById('receiptLightboxModal').classList.remove('open');
-      });
-      document.getElementById('receiptLightboxModal').addEventListener('click', (e) => {
-        if (e.target.id === 'receiptLightboxModal') {
-          e.target.classList.remove('open');
-        }
-      });
     });
   </script>
 </body>
